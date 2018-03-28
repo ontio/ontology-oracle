@@ -36,7 +36,7 @@ Then install the requirements via
 pip install -r requirements.txt
 ```
 
-#Compilation
+# Compilation
 The template may be compiled as follows
 
 ```python
