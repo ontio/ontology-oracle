@@ -8,8 +8,25 @@ Created on Tue Mar  6 03:32:21 2018
 from boa.blockchain.vm.Neo.Runtime import GetTrigger, CheckWitness
 from boa.blockchain.vm.Neo.TriggerType import Application, Verification
 from lib.decentralizedOracle import DecentralizedOracle
+from boa.blockchain.vm.Neo.Action import RegisterAction
 
 OWNER = b''
+
+#register event
+CreateRequest = RegisterAction('createRequest', 'result')
+SetOutcome = RegisterAction('setOutcome', 'result')
+IsOutcomeSet = RegisterAction('isOutcomeSet', 'result')
+IsChallenged = RegisterAction('isChallenged', 'result')
+IsChallengePeriodOver = RegisterAction('isChallengePeriodOver', 'result')
+GetChallengeAmount = RegisterAction('getChallengeAmount', 'result')
+ChallengeOutcome = RegisterAction('challengeOutcome', 'result')
+VoteForOutcome = RegisterAction('voteForOutcome', 'result')
+IsFrontRunnerPeriodOver = RegisterAction('isFrontRunnerPeriodOver', 'result')
+IsChallengePeriodOver = RegisterAction('isChallengePeriodOver', 'result')
+IsFinalOutcomeSet = RegisterAction('isFinalOutcomeSet', 'result')
+GetFinalOutcome = RegisterAction('getFinalOutcome', 'result')
+GetFrontRunner = RegisterAction('getFrontRunner', 'result')
+RedeemWinnings = RegisterAction('redeemWinnings', 'result')
 
 def Main(operation, args):
     """
@@ -47,7 +64,8 @@ def Main(operation, args):
             frontRunnerPeriod = args[4]
             
             r = decentralizedOracle.createRequest(ID, spreadMultiplier, challengePeriod, challengeAmount, frontRunnerPeriod)
-            #print("createDecentralizedOracle done!")
+            CreateRequest(r)
+            #print("createRequest done!")
             return r
         elif operation == 'setOutcome':
             if len(args) != 4:
@@ -58,6 +76,7 @@ def Main(operation, args):
             owner = args[2]
             contractAddress = args[3]
             r = decentralizedOracle.setOutcome(ID, outcome, owner, contractAddress)
+            SetOutcome(r)
             #print('setOutcome done!')
             return r
         elif operation == 'isOutcomeSet':
@@ -66,6 +85,7 @@ def Main(operation, args):
                 return False
             ID = args[0]
             r = decentralizedOracle.isOutcomeSet(ID)
+            IsOutcomeSet(r)
             #print('isOutcomeSet done!')
             return r
 #        elif operation == 'getOutcome':
@@ -82,6 +102,7 @@ def Main(operation, args):
                 return False
             ID = args[0]
             r = decentralizedOracle.isChallenged(ID)
+            IsChallenged(r)
             #print('isChallenged done!')
             return r
         elif operation == 'isChallengePeriodOver':
@@ -90,6 +111,7 @@ def Main(operation, args):
                 return False
             ID = args[0]
             r = decentralizedOracle.isChallengePeriodOver(ID)
+            IsChallengePeriodOver(r)
             #print('isChallengePeriodOver done!')
             return r
 #        elif operation == 'getOwner':
@@ -106,6 +128,7 @@ def Main(operation, args):
                 return False
             ID = args[0]
             r = decentralizedOracle.getChallengeAmount(ID)
+            GetChallengeAmount(r)
             #print('getChallengeAmount done!')
             return r
         elif operation == 'challengeOutcome':
@@ -117,6 +140,7 @@ def Main(operation, args):
             challenger = args[2]
             contractAddress = args[3]
             r = decentralizedOracle.challengeOutcome(ID, newOutcome, challenger, contractAddress)
+            ChallengeOutcome(r)
             #print('challengeOutcome done!')
             return r
         elif operation == 'voteForOutcome':
@@ -129,6 +153,7 @@ def Main(operation, args):
             voter = args[3]
             contractAddress = args[4]
             r = decentralizedOracle.voteForOutcome(ID, outcome, amount, voter, contractAddress)
+            VoteForOutcome(r)
             #print('voteForOutcome done!')
             return r
         elif operation == 'isFrontRunnerPeriodOver':
@@ -137,6 +162,7 @@ def Main(operation, args):
                 return False
             ID = args[0]
             r = decentralizedOracle.isFrontRunnerPeriodOver(ID)
+            IsFrontRunnerPeriodOver(r)
             #print('isFrontRunnerPeriodOver done!')
             return r
         elif operation == 'isFinalOutcomeSet':
@@ -145,6 +171,7 @@ def Main(operation, args):
                 return False
             ID = args[0]
             r = decentralizedOracle.isFinalOutcomeSet(ID)
+            IsFinalOutcomeSet(r)
             #print('isFinalOutcomeSet done!')
             return r
         elif operation == 'getFinalOutcome':
@@ -153,6 +180,7 @@ def Main(operation, args):
                 return False
             ID = args[0]
             r = decentralizedOracle.getFinalOutcome(ID)
+            GetFinalOutcome(r)
             #print('getFinalOutcome done!')
             return r
         elif operation == 'getFrontRunner':
@@ -161,6 +189,7 @@ def Main(operation, args):
                 return False
             ID = args[0]
             r = decentralizedOracle.getFrontRunner(ID)
+            GetFrontRunner(r)
             #print('getFrontRunner done!')
             return r
         elif operation == 'redeemWinnings':
@@ -170,6 +199,7 @@ def Main(operation, args):
             ID = args[0]
             owner = args[1]
             r = decentralizedOracle.redeemWinnings(ID, owner)
+            RedeemWinnings(r)
             #print('redeemWinnings done!')
             return r
         return False

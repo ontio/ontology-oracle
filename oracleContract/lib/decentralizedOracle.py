@@ -12,7 +12,7 @@ from boa.blockchain.vm.Neo.Runtime import CheckWitness
 from boa.blockchain.vm.Neo.Storage import GetContext, Get, Put
 
 class DecentralizedOracle(object):
-
+    
     def createRequest(self, ID: bytes, spreadMultiplier: int, challengePeriod: int, challengeAmount: int, frontRunnerPeriod: int):
         
         outcome = 0
@@ -87,7 +87,7 @@ class DecentralizedOracle(object):
         
         return True
         
-    #Returns if winning outcome is set
+    #Returns if outcome is set
     #return Is outcome set?
     def isOutcomeSet(self, ID: bytes):
         ctx = GetContext()

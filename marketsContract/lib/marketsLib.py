@@ -12,7 +12,7 @@ from boa.blockchain.vm.Neo.Blockchain import GetHeight, GetHeader
 from boa.blockchain.vm.Neo.Header import GetTimestamp, GetNextConsensus, GetHash
 from boa.blockchain.vm.Neo.Runtime import CheckWitness
 
-OracleContract = RegisterAppCall('c43daa0b3a784f479a2db0f9915222f6fb9d8b47', 'operation', 'args')
+OracleContract = RegisterAppCall('816a32c55f21b47b13da9519009dbcc682cd9b80', 'operation', 'args')
 
 class Markets(object):
     
@@ -20,11 +20,11 @@ class Markets(object):
     def createCategoricalEvent(self, ipfsHash: bytes, spreadMultiplier: int, challengePeriod: int, challengeAmount: int, frontRunnerPeriod: int, endTime: int):
         ctx = GetContext()
         #createDecentralizedOracle
-        operation = 'createDecentralizedOracle'
+        operation = 'createRequest'
         args = [ipfsHash, spreadMultiplier, challengePeriod, challengeAmount, frontRunnerPeriod]
         isok = OracleContract(operation, args)
         if not isok:
-            #print('createDecentralizedOracle Failed')
+            #print('createRequest Failed')
             return False
         
         keyEndTime = concat(b'EndTime', ipfsHash)

@@ -9,8 +9,16 @@ Created on Mon Mar 12 09:24:54 2018
 from boa.blockchain.vm.Neo.Runtime import GetTrigger, CheckWitness
 from boa.blockchain.vm.Neo.TriggerType import Application, Verification
 from lib.marketsLib import Markets
+from boa.blockchain.vm.Neo.Action import RegisterAction
 
 OWNER = b''
+
+#register event
+CreateCategoricalEvent = RegisterAction('createCategoricalEvent', 'result')
+BetOnOutcome = RegisterAction('betOnOutcome', 'result')
+IsFinalOutcomeSet = RegisterAction('isFinalOutcomeSet', 'result')
+GetFinalOutcome = RegisterAction('getFinalOutcome', 'result')
+RedeemWinnings = RegisterAction('redeemWinnings', 'result')
 
 def Main(operation, args):
     """
@@ -47,6 +55,7 @@ def Main(operation, args):
             endTime = args[5]
             
             r = markets.createCategoricalEvent(ipfsHash, spreadMultiplier, challengePeriod, challengeAmount, frontRunnerPeriod, endTime)
+            CreateCategoricalEvent(r)
             #print("createCategoricalEvent done!")
             return r
         elif operation == 'betOnOutcome':
@@ -59,6 +68,7 @@ def Main(operation, args):
             owner = args[3]
             contractAddress = args[4]
             r = markets.betOnOutcome(ipfsHash, outcome, amount, owner, contractAddress)
+            BetOnOutcome(r)
             #print('betOnOutcome done!')
             return r
         elif operation == 'isFinalOutcomeSet':
@@ -67,6 +77,7 @@ def Main(operation, args):
                 return False
             ipfsHash = args[0]
             r = markets.isFinalOutcomeSet(ipfsHash)
+            IsFinalOutcomeSet(r)
             #print('isFinalOutcomeSet done!')
             return r
         elif operation == 'getFinalOutcome':
@@ -75,6 +86,7 @@ def Main(operation, args):
                 return False
             ipfsHash = args[0]
             r = markets.getFinalOutcome(ipfsHash)
+            GetFinalOutcome(r)
             #print('getFinalOutcome done!')
             return r
         elif operation == 'redeemWinnings':
@@ -84,6 +96,7 @@ def Main(operation, args):
             ipfsHash = args[0]
             owner = args[1]
             r = markets.redeemWinnings(ipfsHash, owner)
+            RedeemWinnings(r)
             #print('redeemWinnings done!')
             return r
         return False
