@@ -1,17 +1,19 @@
+[中文版](./README_cn.md)
+
 # Ontology Oracle
-本体网络上的oracle和预测市场合约。
+Ontology’s Oracle and the Prediction market contract.
 
-# 预测市场
-智能合约是在区块链提供的沙盒环境中运行，沙盒是个封闭环境，使合约代码不能读取链外数据，但很多时候智能合约又必须依赖外部触发条件。比如：
+# Prediction market
+Smart Contracts are confined to Blockchain’s isolated sandbox environment. Contract codes are unable to access data outside the chain, therefore relying on external initiators/factors. For example:  
 
-2018 世界杯即将开赛，球迷可用智能合约来实现对赌，比如有球迷 A 预测巴西队会夺冠，另有球迷 B 预测德国队夺冠。这就可以开设一个赌局：巴西队夺冠，则 B 的赌注判给 A，反之亦然，如果两队都没有夺冠，则赌约自动解除。
+The World Cup 2018 is nearing its kickoff. Football supporters will be able to place bets using smart contracts. Supporter A bets on Brazil to win the championship, while Supporter B bets on Germany. The gamble begins: Brazil wins. Supporter A is awarded with Supporter B’s wager. However, should none of the teams have won, the betting arrangement would have been automatically invalidated. 
 
-赌约的规则很简单，但在区块链去中心化体系下存在一个关键问题是，如何将比赛结果放进这个赌约当中去？区块链系统中却无从判断外面现实世界发生的事件，这就需要我们引入一种机制将现实社会的事件输入区块链之中。不过，因为区块链“去中心化”的特点，没有一个节点可以对输入信息的真伪做出裁决，如果这种机制设计得不够周密，那么参与智能合约赌局的一方就很有可能为了利益而否认事实。
+Despite the rules on betting being plain and simple, the essential issue regarding its implementation in a decentralized blockchain ecosystem is: how is the result included in the equation? While blockchain is unable to detect or extract any data deriving from the real world, a mechanism is needed to import data from it onto the blockchain. Although, because of decentralized blockchain’s unique features, there is no way of verifying or guaranteeing the truthfulness of the information being imported. If these mechanisms are not designed carefully enough, participants using smart contracts in a bett might benefit from altering the integrity of the information submitted.
 
-# 预言机
-这种机制就是Oracle预言机，Oracle的核心功能是提供数据上链服务。
+# Oracle
+The Oracle is a mechanism equipped to upload data onto the blockchain. 
 
-我们没办法保证官方渠道的准确性（被黑客篡改），和网站无法访问的情况，也就无法信任这个数据来源。而这类错误又将造成严重后果，在这种情况下我们还有另一个选择，那就是预测市场，用利益得失来强迫群体说真话。人们下注，博弈，以利益绑定的形式来保证数据的准确性。没人愿意为错误的比赛结果买单，所以这个数据更可信。
+When unable to guarantee data accuracy originating from authoritative channels (in case of external tampering or hackers), or when visiting inaccessible websites, mistrust emerges concerning the source of the data. These errors can cause severe consequences, therefore presenting us with an alternative: the forecast market; using the gains and losses to stimulate/coerce/enforce groups to provide actual information. People will possess binding interest when placing bets, hence ensuring data accuracy. No one wants to bear the consequences caused by error or inaccurate data – thus reassuring the integrity of the data. 
 
 # Requirements
 Usage requires Python 3.5.
