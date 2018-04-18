@@ -7,10 +7,10 @@ import (
 	"syscall"
 
 	"github.com/ontio/ontology/account"
-	"github.com/ontology-oracle/config"
-	"github.com/ontology-oracle/log"
-	"github.com/ontology-oracle/models"
-	"github.com/ontology-oracle/utils"
+	"github.com/ontio/ontology-oracle/config"
+	"github.com/ontio/ontology-oracle/log"
+	"github.com/ontio/ontology-oracle/models"
+	"github.com/ontio/ontology-oracle/utils"
 	"strings"
 	"time"
 )

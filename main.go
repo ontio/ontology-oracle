@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
-	"github.com/ontology-oracle/log"
-	"github.com/ontology-oracle/node"
+	"github.com/ontio/ontology-oracle/log"
+	"github.com/ontio/ontology-oracle/node"
 	"github.com/urfave/cli"
 )
 

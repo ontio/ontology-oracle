@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/ontology-oracle/utils"
+	"github.com/ontio/ontology-oracle/utils"
 )
 
 type JobSpec struct {

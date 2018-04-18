@@ -3,9 +3,9 @@ package core
 import (
 	"time"
 
-	"github.com/ontology-oracle/log"
-	"github.com/ontology-oracle/models"
-	"github.com/ontology-oracle/runners"
+	"github.com/ontio/ontology-oracle/log"
+	"github.com/ontio/ontology-oracle/models"
+	"github.com/ontio/ontology-oracle/runners"
 	"github.com/robfig/cron"
 )
 

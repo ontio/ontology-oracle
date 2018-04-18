@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/ontology-oracle/log"
+	"github.com/ontio/ontology-oracle/log"
 )
 
 type WebSocketOptions struct {

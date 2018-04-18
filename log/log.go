@@ -22,7 +22,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/ontology-oracle/config"
+	"github.com/ontio/ontology-oracle/config"
 	"io"
 	"io/ioutil"
 	"log"

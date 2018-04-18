@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/bitly/go-simplejson"
-	"github.com/ontology-oracle/models"
+	"github.com/ontio/ontology-oracle/models"
 	"strconv"
 )
 

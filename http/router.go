@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ontology-oracle/core"
-	"github.com/ontology-oracle/log"
+	"github.com/ontio/ontology-oracle/core"
+	"github.com/ontio/ontology-oracle/log"
 )
 
 // Router listens and responds to requests to the node for valid paths.

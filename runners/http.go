@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/ontology-oracle/models"
+	"github.com/ontio/ontology-oracle/models"
 )
 
 type HTTPGet struct {

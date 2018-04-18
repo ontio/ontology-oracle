@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/ontio/ontology/common"
-	"github.com/ontology-oracle/config"
+	"github.com/ontio/ontology-oracle/config"
 	"github.com/satori/go.uuid"
 )
 

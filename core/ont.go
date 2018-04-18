@@ -18,10 +18,10 @@ import (
 	cstates "github.com/ontio/ontology/smartcontract/states"
 	vmtypes "github.com/ontio/ontology/smartcontract/types"
 	"github.com/ontio/ontology/vm/neovm"
-	"github.com/ontology-oracle/config"
-	"github.com/ontology-oracle/log"
-	"github.com/ontology-oracle/models"
-	"github.com/ontology-oracle/utils"
+	"github.com/ontio/ontology-oracle/config"
+	"github.com/ontio/ontology-oracle/log"
+	"github.com/ontio/ontology-oracle/models"
+	"github.com/ontio/ontology-oracle/utils"
 )
 
 func (app *OracleApplication) InvokeNeoVM(
@@ -194,40 +194,42 @@ func (app *OracleApplication) ParseResp(resp map[string]interface{}) error {
 	return nil
 }
 
+type UndoRequests struct {
+	Requests map[string]interface{} `json:"requests"`
+}
+
 func (app *OracleApplication) AddUndoRequests() error {
 	address, err := utils.GetContractAddress()
 	if err != nil {
 		return fmt.Errorf("GetContractAddress error: %v", err)
 	}
 
-	numBytes, err := app.RPC.GetStorage(address, []byte("Num"))
+	value, err := app.RPC.GetStorage(address, []byte("UndoTxHash"))
 	if err != nil {
-		return fmt.Errorf("GetStorage error: %v", err)
-	}
-	num := int(new(big.Int).SetBytes(numBytes).Int64())
-
-	value, err := app.RPC.GetStorage(address, []byte("Undo"))
-	if err != nil {
-		return fmt.Errorf("GetStorage error:%s", err)
+		return fmt.Errorf("GetStorage UndoTxHash error:%s", err)
 	}
 
-	for i := 0; i < num; i++ {
-		txHashBytes := value[32*i : 32*i+32]
-		txHash := hex.EncodeToString(txHashBytes)
+	undoRequests := &UndoRequests{
+		Requests: make(map[string]interface{}),
+	}
+	err = json.Unmarshal(value, &undoRequests)
+	if err != nil {
+		return fmt.Errorf("Unmarshal UndoRequests: %s", err)
+	}
+
+	for txHash := range undoRequests.Requests {
 		tx, err := utils.ParseUint256FromHexString(txHash)
-		if err != nil {
-			return fmt.Errorf("ParseUint256FromHexString error:%s", err)
-		}
 		events, err := app.RPC.GetSmartContractEvent(tx)
 		if err != nil {
 			return fmt.Errorf("GetSmartContractEvent error:%s", err)
 		}
 
-		name, _ := utils.ConvertToString(events[0].States[0])
+		name := (events[0].States[0]).(string)
 		if name != "createOracleRequest" {
 			return nil
 		}
-		request, _ := utils.ConvertToString(events[0].States[1])
+
+		request := (events[0].States[1]).(string)
 
 		j := models.JobSpec{}
 		err = json.Unmarshal([]byte(request), &j)

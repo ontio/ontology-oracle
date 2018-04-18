@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ontology-oracle/models"
+	"github.com/ontio/ontology-oracle/models"
 )
 
 // The Runner interface applies to all core runners.
