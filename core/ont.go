@@ -24,41 +24,25 @@ import (
 	"github.com/ontio/ontology-oracle/utils"
 )
 
-func (app *OracleApplication) InvokeNeoVM(
+func (app *OracleApplication) InvokeOracleContract(
 	account *account.Account,
 	address common.Address,
-	params []interface{}) error {
-
-	code, err := app.BuildNVMInvokeCode(address, params)
-	if err != nil {
-		return fmt.Errorf("BuildNVMInvokeCode error:%s", err)
-	}
-	tx := app.NewInvokeTransaction(0, vmtypes.NEOVM, code)
-
-	return app.SendTransaction(account, tx)
-}
-
-func (app *OracleApplication) BuildNVMInvokeCode(addr common.Address, params []interface{}) ([]byte, error) {
-	builder := neovm.NewParamsBuilder(new(bytes.Buffer))
-	err := app.buildNVMParamInter(builder, params)
-	if err != nil {
-		return nil, err
-	}
-	args := builder.ToArray()
+	operation string,
+	args []byte) error {
 
 	crt := &cstates.Contract{
-		Address: addr,
+		Address: address,
+		Method:  operation,
 		Args:    args,
 	}
-	crtBuf := bytes.NewBuffer(nil)
-	err = crt.Serialize(crtBuf)
-	if err != nil {
-		return nil, fmt.Errorf("Serialize contract error:%s", err)
-	}
-
 	buf := bytes.NewBuffer(nil)
-	buf.Write(append([]byte{0x67}, crtBuf.Bytes()[:]...))
-	return buf.Bytes(), nil
+	err := crt.Serialize(buf)
+	if err != nil {
+		return fmt.Errorf("Serialize contract error:%s", err)
+	}
+	tx := app.NewInvokeTransaction(new(big.Int).SetInt64(0), vmtypes.Native, buf.Bytes())
+
+	return app.SendTransaction(account, tx)
 }
 
 func (app *OracleApplication) SendTransaction(signer *account.Account, tx *types.Transaction) error {
@@ -70,9 +54,9 @@ func (app *OracleApplication) SendTransaction(signer *account.Account, tx *types
 	return app.RPC.SendRawTransaction(tx)
 }
 
-func (app *OracleApplication) NewInvokeTransaction(gasLimit common.Fixed64, vmType vmtypes.VmType, code []byte) *types.Transaction {
+func (app *OracleApplication) NewInvokeTransaction(gasLimit *big.Int, vmType vmtypes.VmType, code []byte) *types.Transaction {
 	invokePayload := &payload.InvokeCode{
-		GasLimit: gasLimit,
+		GasLimit: common.Fixed64(gasLimit.Int64()),
 		Code: vmtypes.VmCode{
 			VmType: vmType,
 			Code:   code,
@@ -208,6 +192,9 @@ func (app *OracleApplication) AddUndoRequests() error {
 	if err != nil {
 		return fmt.Errorf("GetStorage UndoTxHash error:%s", err)
 	}
+	if len(value) == 0 {
+		return nil
+	}
 
 	undoRequests := &UndoRequests{
 		Requests: make(map[string]interface{}),
@@ -244,6 +231,12 @@ func (app *OracleApplication) AddUndoRequests() error {
 	return nil
 }
 
+type SetOracleOutcomeParam struct {
+	TxHash  string      `json:"txHash"`
+	Owner   string      `json:"owner"`
+	Outcome interface{} `json:"outcome"`
+}
+
 func (app *OracleApplication) sendDataToContract(jr models.JobRun) error {
 	address, err := utils.GetContractAddress()
 	if err != nil {
@@ -251,13 +244,20 @@ func (app *OracleApplication) sendDataToContract(jr models.JobRun) error {
 	}
 
 	operation := "setOracleOutcome"
-	txHash, _ := hex.DecodeString(jr.JobID)
+	txHash := jr.JobID
 	dataString := jr.Result.Data.Get("value").String()
-	args := []interface{}{txHash, dataString}
-	err = app.InvokeNeoVM(
+	params := &SetOracleOutcomeParam{
+		TxHash:  txHash,
+		Owner:   hex.EncodeToString(app.Account.Address[:]),
+		Outcome: dataString,
+	}
+
+	args, err := json.Marshal(params)
+	err = app.InvokeOracleContract(
 		app.Account,
 		address,
-		[]interface{}{operation, args})
+		operation,
+		args)
 	return err
 }
 
@@ -268,12 +268,19 @@ func (app *OracleApplication) sendCronDataToContract(jr models.JobRun) error {
 	}
 
 	operation := "setOracleCronOutcome"
-	txHash, _ := hex.DecodeString(jr.JobID)
+	txHash := jr.JobID
 	dataString := jr.Result.Data.Get("value").String()
-	args := []interface{}{txHash, dataString}
-	err = app.InvokeNeoVM(
+	params := &SetOracleOutcomeParam{
+		TxHash:  txHash,
+		Owner:   hex.EncodeToString(app.Account.Address[:]),
+		Outcome: dataString,
+	}
+
+	args, err := json.Marshal(params)
+	err = app.InvokeOracleContract(
 		app.Account,
 		address,
-		[]interface{}{operation, args})
+		operation,
+		args)
 	return err
 }
