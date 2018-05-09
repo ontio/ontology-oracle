@@ -27,6 +27,15 @@ oracle contract主要通过某种共识机制对node发送的数据进行聚集�
 ![workflow](/resources/workflow.png)
 
 ## 使用说明
+### 申请注册Oracle Node
+调用Oracle contract的RegisterOracleNode方法，参数为：
+type RegisterOracleNodeParam struct {
+	Address  string `json:"address"`
+	Guaranty uint64 `json:"guaranty"`
+}
+Address要申请成为Oracle Node的钱包地址，Guaranty需要抵押至少1000个ONT最为押金，该接口调用需要额外消耗500ONG。
+申请完成之后，会有管理员审核该申请，同意之后即可成为Oracle Node。
+
 ### 配置
 ```text
 {
