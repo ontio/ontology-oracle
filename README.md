@@ -23,6 +23,9 @@ Ontology oracle正是这样的一个数据搬运工的角色，它使得在智�
 ### 链上部分（oracle contract)
 oracle contract主要通过某种共识机制对node发送的数据进行聚集，最终达成一个结果。
 
+### Oracle运作流程
+![workflow](/resources/workflow.png)
+
 ## 使用说明
 ### 配置
 ```text
