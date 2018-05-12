@@ -42,13 +42,11 @@ Address要申请成为Oracle Node的钱包地址，Guaranty需要抵押至少100
   "LogLevel": 0,
   "Port": "6688",
   "MaxLogSize": 50,
-  "ONTWSAddress": "ws://127.0.0.1:20335",
   "ONTRPCAdress": "http://127.0.0.1:20336",
-  "ScannerInterval": 5,
-  "CodeHash": "80c91e88c8f6b60a7d6732ce99a9965bdb199dae"
+  "ScannerInterval": 3,
 }
 ```
-LogLevel配置日志级别， port配置node的http端口，MaxLogSize配置单个日志文件的大小，不指定默认20M，ONTWSAddress配置ontology网络的websocket地址，ONTRPCAdress配置ontology网络的rpc地址，ScannerInterval配置node扫描ontology网络中oracle请求的时间间隔，CodeHash则配置区块链网络中oracle contract的地址。
+LogLevel配置日志级别， port配置node的http端口，MaxLogSize配置单个日志文件的大小，不指定默认20M，ONTRPCAdress配置ontology网络的rpc地址，ScannerInterval配置node扫描ontology网络中oracle请求的时间间隔。
 
 ### 启动oracle node
 生成钱包文件wallet.dat，-p参数为钱包密码

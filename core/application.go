@@ -1,18 +1,18 @@
 package core
 
 import (
-	"encoding/json"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
+	"time"
 
-	"github.com/ontio/ontology/account"
+	sdkcom "github.com/ontio/ontology-go-sdk/common"
+	"github.com/ontio/ontology-go-sdk/rpc"
 	"github.com/ontio/ontology-oracle/config"
 	"github.com/ontio/ontology-oracle/log"
 	"github.com/ontio/ontology-oracle/models"
-	"github.com/ontio/ontology-oracle/utils"
-	"strings"
-	"time"
+	"github.com/ontio/ontology/account"
 )
 
 // Application implements the common functions used in the core node.
@@ -25,8 +25,7 @@ type OracleApplication struct {
 	Account   *account.Account
 	JobList   chan *models.JobSpec
 	DoingJobs map[string]interface{}
-	WS        *utils.WebSocketClient
-	RPC       *utils.RpcClient
+	RPC       *rpc.RpcClient
 	Exiter    func(int)
 }
 
@@ -50,7 +49,6 @@ func (app *OracleApplication) Start() {
 		app.Exiter(1)
 	}()
 
-	//go app.OntListener()
 	go app.JobRunner()
 	go app.OntScanner()
 }
@@ -80,7 +78,7 @@ func (app *OracleApplication) JobRunner() {
 
 func (app *OracleApplication) OntScanner() {
 	log.Info("Start getting undo request in oracle contract.")
-	app.RPC = utils.NewRpcClient()
+	app.RPC = rpc.NewRpcClient(sdkcom.CRYPTO_SCHEME_DEFAULT)
 	app.RPC.SetAddress(config.Configuration.ONTRPCAdress)
 
 	timer := time.NewTimer(time.Duration(config.Configuration.ScannerInterval) * time.Second)
@@ -99,35 +97,4 @@ func (app *OracleApplication) OntScanner() {
 
 func (app *OracleApplication) AddJob(job *models.JobSpec) {
 	app.JobList <- job
-}
-
-func (app *OracleApplication) OntListener() {
-	address := config.Configuration.ONTWSAddress
-	wsClient := utils.NewWebSocketClient(address)
-	app.WS = wsClient
-	recvCh, existCh, err := wsClient.Connet()
-	if err != nil {
-		log.Fatalf("NewWebSocketClient error: %v", err.Error())
-	} else {
-		log.Infof("NewWebSocketClient connected: %v", address)
-	}
-	go func() {
-		for {
-			select {
-			case <-existCh:
-				return
-			case data := <-recvCh:
-				resp := make(map[string]interface{}, 0)
-				err := json.Unmarshal(data, &resp)
-				if err != nil {
-					log.Errorf("WS json.Unmarshal error: %v", err.Error())
-					continue
-				}
-				err = app.ParseResp(resp)
-				if err != nil {
-					log.Errorf("Parse ontology transaction error: %v", err.Error())
-				}
-			}
-		}
-	}()
 }

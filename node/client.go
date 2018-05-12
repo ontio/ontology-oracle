@@ -2,15 +2,17 @@ package node
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/gin-gonic/gin"
-	"github.com/ontio/ontology/account"
-	"github.com/ontio/ontology/common"
 	"github.com/ontio/ontology-oracle/config"
 	"github.com/ontio/ontology-oracle/core"
 	"github.com/ontio/ontology-oracle/http"
 	"github.com/ontio/ontology-oracle/log"
+	"github.com/ontio/ontology/account"
+	"github.com/ontio/ontology/common"
 	"github.com/urfave/cli"
-	"os"
+	sdk "github.com/ontio/ontology-go-sdk"
 )
 
 // Client is the shell for the node. It has fields for the Renderer,
@@ -29,12 +31,18 @@ func (client *Client) RunNode(c *cli.Context) error {
 		log.Fatal(fmt.Sprintf("No %s detected, please create a wallet.", account.WALLET_FILENAME))
 		os.Exit(1)
 	}
-	accountClient := account.Open(account.WALLET_FILENAME, []byte(c.String("password")))
-	if client == nil {
-		log.Fatal("Can't get local account.")
+	ontSdk := sdk.NewOntologySdk()
+	wallet, err := ontSdk.OpenWallet(account.WALLET_FILENAME, c.String("password"))
+	if err != nil {
+		log.Fatal("Can't open local wallet.")
 		os.Exit(1)
 	}
-	acct := accountClient.GetDefaultAccount()
+	acct, err := wallet.GetDefaultAccount()
+	if err != nil {
+		log.Fatal("Can't get default account.")
+		os.Exit(1)
+	}
+
 	app := client.AppFactory.NewApplication(acct)
 
 	app.Start()

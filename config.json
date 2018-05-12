@@ -1,8 +1,6 @@
 {
   "LogLevel": 0,
   "Port": "6688",
-  "ONTWSAddress": "ws://127.0.0.1:20335",
   "ONTRPCAdress": "http://127.0.0.1:20336",
-  "ScannerInterval": 3,
-  "CodeHash": "ff00000000000000000000000000000000000005"
+  "ScannerInterval": 3
 }

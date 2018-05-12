@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/ontio/ontology/common"
-	"github.com/ontio/ontology-oracle/config"
 	"github.com/satori/go.uuid"
+	"github.com/ontio/ontology/core/genesis"
 )
 
 // NewBytes32ID returns a randomly generated UUID
@@ -49,13 +49,6 @@ func ParseUint256FromHexString(value string) (common.Uint256, error) {
 }
 
 func GetContractAddress() (common.Address, error) {
-	addressBytes, err := hex.DecodeString(config.Configuration.CodeHash)
-	if err != nil {
-		return common.Address{}, fmt.Errorf("Decode codeHash config error: %v", err)
-	}
-	address, err := common.AddressParseFromBytes(addressBytes)
-	if err != nil {
-		return common.Address{}, fmt.Errorf("Decode codeHash config error: %v", err)
-	}
+	address := genesis.OracleContractAddress
 	return address, nil
 }
