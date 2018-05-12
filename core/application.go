@@ -67,8 +67,8 @@ func (app *OracleApplication) JobRunner() {
 			continue
 		}
 		switch strings.ToLower(job.Scheduler.Type) {
-		case "cron":
-			go app.ExecuteCron(job)
+		//case "cron":
+		//	go app.ExecuteCron(job)
 		default:
 			jobRun := job.NewRun()
 			go app.ExecuteRun(jobRun)

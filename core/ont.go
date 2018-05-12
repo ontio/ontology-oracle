@@ -12,6 +12,7 @@ import (
 	"github.com/ontio/ontology/common"
 	cstates "github.com/ontio/ontology/smartcontract/states"
 	vmtypes "github.com/ontio/ontology/smartcontract/types"
+	"github.com/ontio/ontology/smartcontract/service/native/oracle"
 )
 
 func (app *OracleApplication) InvokeOracleContract(
@@ -83,15 +84,16 @@ func (app *OracleApplication) AddUndoRequests() error {
 			return fmt.Errorf("GetSmartContractEvent error:%s", err)
 		}
 
-		name := (events[0].States[0]).(string)
+		name := (events[1].States[0]).(string)
 		if name != "createOracleRequest" {
 			return nil
 		}
 
-		request := (events[0].States[1]).(map[string]interface{})
+		request := (events[1].States[1]).(map[string]interface{})
 
 		address := hex.EncodeToString(app.Account.Address[:])
 		if request["oracleNode"].(string) != address {
+			fmt.Println("a")
 			return nil
 		}
 
@@ -108,18 +110,6 @@ func (app *OracleApplication) AddUndoRequests() error {
 	return nil
 }
 
-type SetOracleOutcomeParam struct {
-	TxHash  string `json:"txHash"`
-	Address string `json:"address"`
-	Outcome string `json:"outcome"`
-}
-
-type SetOracleCronOutcomeParam struct {
-	TxHash  string `json:"txHash"`
-	Address string `json:"address"`
-	Outcome string `json:"outcome"`
-}
-
 func (app *OracleApplication) sendDataToContract(jr models.JobRun) error {
 	address, err := utils.GetContractAddress()
 	if err != nil {
@@ -129,39 +119,45 @@ func (app *OracleApplication) sendDataToContract(jr models.JobRun) error {
 	operation := "setOracleOutcome"
 	txHash := jr.JobID
 	dataString := jr.Result.Data.Get("value").String()
-	params := &SetOracleOutcomeParam{
+	params := &oracle.SetOracleOutcomeParam{
 		TxHash:  txHash,
 		Address: hex.EncodeToString(app.Account.Address[:]),
 		Outcome: dataString,
 	}
 
-	args, err := json.Marshal(params)
+	bf := new(bytes.Buffer)
+	if err := params.Serialize(bf); err != nil {
+		return fmt.Errorf("Serialize params error: %v", err)
+	}
 	err = app.InvokeOracleContract(
 		address,
 		operation,
-		args)
+		bf.Bytes())
 	return err
 }
 
-func (app *OracleApplication) sendCronDataToContract(jr models.JobRun) error {
-	address, err := utils.GetContractAddress()
-	if err != nil {
-		return fmt.Errorf("GetContractAddress error: %v", err)
-	}
-
-	operation := "setOracleCronOutcome"
-	txHash := jr.JobID
-	dataString := jr.Result.Data.Get("value").String()
-	params := &SetOracleCronOutcomeParam{
-		TxHash:  txHash,
-		Address: hex.EncodeToString(app.Account.Address[:]),
-		Outcome: dataString,
-	}
-
-	args, err := json.Marshal(params)
-	err = app.InvokeOracleContract(
-		address,
-		operation,
-		args)
-	return err
-}
+//func (app *OracleApplication) sendCronDataToContract(jr models.JobRun) error {
+//	address, err := utils.GetContractAddress()
+//	if err != nil {
+//		return fmt.Errorf("GetContractAddress error: %v", err)
+//	}
+//
+//	operation := "setOracleCronOutcome"
+//	txHash := jr.JobID
+//	dataString := jr.Result.Data.Get("value").String()
+//	params := &oracle.SetOracleCronOutcomeParam{
+//		TxHash:  txHash,
+//		Address: hex.EncodeToString(app.Account.Address[:]),
+//		Outcome: dataString,
+//	}
+//
+//	bf := new(bytes.Buffer)
+//	if err := params.Serialize(bf); err != nil {
+//		return fmt.Errorf("Serialize params error: %v", err)
+//	}
+//	err = app.InvokeOracleContract(
+//		address,
+//		operation,
+//		bf.Bytes())
+//	return err
+//}

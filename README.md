@@ -87,7 +87,7 @@ var args = []interface{}{request, address}
     "tasks": [{}, {}，...]
 }
 ```
-job由scheduler和一系列的task组成，schedule的类型目前支持runAfter和Cron，task的类型目前支持HttpGet, HttpPost, JsonParse.
+job由scheduler和一系列的task组成，schedule的类型目前支持runAfter，task的类型目前支持HttpGet, HttpPost, JsonParse.
 
 ### scheduler定义
 ```text
@@ -100,36 +100,6 @@ job由scheduler和一系列的task组成，schedule的类型目前支持runAfter
 该类型的job会在指定的时间之后执行，如赛事结果oracle可以将其设置为赛事结束之后。
 
 param: 代表时间的字符串，格式如"2018-06-15 08:37:18"
-
-#### Cron
-
-该类型的job实现该任务的周期性执行，如获取每天的天气数据。
-
-param: cron参数，"* * * * * *"
-
-Field name   | Mandatory? | Allowed values  | Allowed special characters
-----------   | ---------- | --------------  | --------------------------
-Seconds      | Yes        | 0-59            | * / , -
-Minutes      | Yes        | 0-59            | * / , -
-Hours        | Yes        | 0-23            | * / , -
-Day of month | Yes        | 1-31            | * / , - ?
-Month        | Yes        | 1-12 or JAN-DEC | * / , -
-Day of week  | Yes        | 0-6 or SUN-SAT  | * / , - ?
-
-1）星号(*)
-表示 cron 表达式能匹配该字段的所有值。如在第5个字段使用星号(month)，表示每个月
-
-2）斜线(/)
-表示增长间隔，如第1个字段(minutes) 值是 3-59/15，表示每小时的第3分钟开始执行一次，之后每隔 15 分钟执行一次（即 3、18、33、48 这些时间点执行），这里也可以表示为：3/15
-
-3）逗号(,)
-用于枚举值，如第6个字段值是 MON,WED,FRI，表示 星期一、三、五 执行
-
-4）连字号(-)
-表示一个范围，如第3个字段的值为 9-17 表示 9am 到 5pm 直接每个小时（包括9和17）
-
-5）问号(?)
-只用于 日(Day of month) 和 星期(Day of week)，表示不指定值，可以用于代替 *
 
 ### task定义
 ```text

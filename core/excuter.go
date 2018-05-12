@@ -6,32 +6,31 @@ import (
 	"github.com/ontio/ontology-oracle/log"
 	"github.com/ontio/ontology-oracle/models"
 	"github.com/ontio/ontology-oracle/runners"
-	"github.com/robfig/cron"
 )
 
-func (app *OracleApplication) ExecuteCron(job *models.JobSpec) {
-	c := cron.New()
-	c.AddFunc(job.Scheduler.Params, func() {
-		log.Infof("Cron job start, job ID is :%v", job.ID)
-		jobRun := job.NewRun()
-		jobRun = app.executeRun(jobRun)
-		if jobRun.Status == models.RunStatusErrored {
-			log.Errorf("Current job run execution error: %v", jobRun.Result.ErrorMessage)
-		}
-		if jobRun.Status == models.RunStatusCompleted {
-			log.Infof("Finished current job run execution: %v, Job result is: %v", jobRun.ID, jobRun.Result)
-
-			err := app.sendCronDataToContract(jobRun)
-			if err != nil {
-				log.Errorf("sendCronDataToContract error: %v", err.Error())
-			} else {
-				log.Infof("sendCronDataToContract success, Job ID is: %v", jobRun.JobID)
-			}
-		}
-	})
-	app.DoingJobs[job.ID] = new(interface{})
-	c.Start()
-}
+//func (app *OracleApplication) ExecuteCron(job *models.JobSpec) {
+//	c := cron.New()
+//	c.AddFunc(job.Scheduler.Params, func() {
+//		log.Infof("Cron job start, job ID is :%v", job.ID)
+//		jobRun := job.NewRun()
+//		jobRun = app.executeRun(jobRun)
+//		if jobRun.Status == models.RunStatusErrored {
+//			log.Errorf("Current job run execution error: %v", jobRun.Result.ErrorMessage)
+//		}
+//		if jobRun.Status == models.RunStatusCompleted {
+//			log.Infof("Finished current job run execution: %v, Job result is: %v", jobRun.ID, jobRun.Result)
+//
+//			err := app.sendCronDataToContract(jobRun)
+//			if err != nil {
+//				log.Errorf("sendCronDataToContract error: %v", err.Error())
+//			} else {
+//				log.Infof("sendCronDataToContract success, Job ID is: %v", jobRun.JobID)
+//			}
+//		}
+//	})
+//	app.DoingJobs[job.ID] = new(interface{})
+//	c.Start()
+//}
 
 func (app *OracleApplication) ExecuteRun(jobRun models.JobRun) {
 	t, _ := time.Parse("2006-01-02 15:04:05", jobRun.Scheduler.Params)
