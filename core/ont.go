@@ -1,49 +1,17 @@
 package core
 
 import (
-	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	sdkcom "github.com/ontio/ontology-go-sdk/common"
+
+	"github.com/ontio/ontology-oracle/config"
 	"github.com/ontio/ontology-oracle/log"
 	"github.com/ontio/ontology-oracle/models"
 	"github.com/ontio/ontology-oracle/utils"
-	"github.com/ontio/ontology/common"
-	cstates "github.com/ontio/ontology/smartcontract/states"
-	vmtypes "github.com/ontio/ontology/smartcontract/types"
-	"github.com/ontio/ontology/smartcontract/service/native/oracle"
 )
 
-func (app *OracleApplication) InvokeOracleContract(
-	address common.Address,
-	operation string,
-	args []byte) error {
-
-	crt := &cstates.Contract{
-		Address: address,
-		Method:  operation,
-		Args:    args,
-	}
-	buf := bytes.NewBuffer(nil)
-	err := crt.Serialize(buf)
-	if err != nil {
-		return fmt.Errorf("Serialize contract error:%s", err)
-	}
-	tx := sdkcom.NewInvokeTransaction(0, 0, vmtypes.Native, buf.Bytes())
-
-	err = sdkcom.SignTransaction(sdkcom.CRYPTO_SCHEME_DEFAULT, tx, app.Account)
-	if err != nil {
-		return fmt.Errorf("SignTransaction error:%s", err)
-	}
-
-	_, err = app.RPC.SendRawTransaction(tx)
-	if err != nil {
-		return fmt.Errorf("SendTransaction error:%s", err)
-	}
-
-	return err
-}
+var Version = byte(0)
 
 type UndoRequests struct {
 	Requests map[string]interface{} `json:"requests"`
@@ -56,12 +24,12 @@ type CreateOracleRequestParam struct {
 }
 
 func (app *OracleApplication) AddUndoRequests() error {
-	address, err := utils.GetContractAddress()
+	contractAddress, err := utils.GetContractAddress()
 	if err != nil {
-		return fmt.Errorf("GetContractAddress error: %v", err)
+		return fmt.Errorf("utils.GetContractAddress error:%s", err)
 	}
 
-	value, err := app.RPC.GetStorage(address, []byte("UndoTxHash"))
+	value, err := app.RPC.GetStorage(contractAddress, []byte("UndoTxHash"))
 	if err != nil {
 		return fmt.Errorf("GetStorage UndoTxHash error:%s", err)
 	}
@@ -111,53 +79,19 @@ func (app *OracleApplication) AddUndoRequests() error {
 }
 
 func (app *OracleApplication) sendDataToContract(jr models.JobRun) error {
-	address, err := utils.GetContractAddress()
-	if err != nil {
-		return fmt.Errorf("GetContractAddress error: %v", err)
-	}
-
 	operation := "setOracleOutcome"
 	txHash := jr.JobID
 	dataString := jr.Result.Data.Get("value").String()
-	params := &oracle.SetOracleOutcomeParam{
-		TxHash:  txHash,
-		Address: hex.EncodeToString(app.Account.Address[:]),
-		Outcome: dataString,
-	}
 
-	bf := new(bytes.Buffer)
-	if err := params.Serialize(bf); err != nil {
-		return fmt.Errorf("Serialize params error: %v", err)
+	args := []interface{}{operation, txHash, dataString}
+	contractAddress, err := utils.GetContractAddress()
+	if err != nil {
+		return fmt.Errorf("utils.GetContractAddress error:%s", err)
 	}
-	err = app.InvokeOracleContract(
-		address,
-		operation,
-		bf.Bytes())
-	return err
+	_, err = app.RPC.InvokeNeoVMContract(config.Configuration.GasPrice, config.Configuration.GasLimit, app.Account,
+		contractAddress, []interface{}{args})
+	if err != nil {
+		return fmt.Errorf("InvokeNeoVMContract error:%s", err)
+	}
+	return nil
 }
-
-//func (app *OracleApplication) sendCronDataToContract(jr models.JobRun) error {
-//	address, err := utils.GetContractAddress()
-//	if err != nil {
-//		return fmt.Errorf("GetContractAddress error: %v", err)
-//	}
-//
-//	operation := "setOracleCronOutcome"
-//	txHash := jr.JobID
-//	dataString := jr.Result.Data.Get("value").String()
-//	params := &oracle.SetOracleCronOutcomeParam{
-//		TxHash:  txHash,
-//		Address: hex.EncodeToString(app.Account.Address[:]),
-//		Outcome: dataString,
-//	}
-//
-//	bf := new(bytes.Buffer)
-//	if err := params.Serialize(bf); err != nil {
-//		return fmt.Errorf("Serialize params error: %v", err)
-//	}
-//	err = app.InvokeOracleContract(
-//		address,
-//		operation,
-//		bf.Bytes())
-//	return err
-//}

@@ -3,36 +3,16 @@ package utils
 import (
 	"encoding/hex"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
 
 	"github.com/ontio/ontology/common"
 	"github.com/satori/go.uuid"
-	"github.com/ontio/ontology/core/genesis"
+	"github.com/ontio/ontology-oracle/config"
 )
 
 // NewBytes32ID returns a randomly generated UUID
 func NewBytes32ID() string {
 	return strings.Replace(uuid.Must(uuid.NewV4()).String(), "-", "", -1)
-}
-
-// BasicPost sends a POST request to the HTTP client with contentType and returns a response.
-func BasicPost(url string, contentType string, body io.Reader) (*http.Response, error) {
-	client := &http.Client{}
-	request, _ := http.NewRequest("POST", url, body)
-	request.Header.Set("Content-Type", contentType)
-	resp, err := client.Do(request)
-	return resp, err
-}
-
-func ConvertToString(v interface{}) (string, error) {
-	value, ok := v.(string)
-	if !ok {
-		return "", fmt.Errorf("%v ConvertToString failed", v)
-	}
-	data, _ := hex.DecodeString(value)
-	return string(data), nil
 }
 
 //ParseUint256FromHexString return Uint256 parse from hex string
@@ -49,6 +29,9 @@ func ParseUint256FromHexString(value string) (common.Uint256, error) {
 }
 
 func GetContractAddress() (common.Address, error) {
-	address := genesis.OracleContractAddress
-	return address, nil
+	contractAddress, err := common.AddressFromBase58(config.Configuration.ContractAddress)
+	if err != nil {
+		return common.Address{}, fmt.Errorf("common.AddressFromBase58 error:%s", err)
+	}
+	return contractAddress, nil
 }

@@ -15,11 +15,15 @@ const (
 // Config holds parameters used by the application which can be overridden
 // by setting environment variables.
 type Config struct {
+	WalletFile      string `json:"WalletFile"`
 	LogLevel        int    `json:"LogLevel"`
 	MaxLogSize      int64  `json:"MaxLogSize"`
 	Port            string `json:"Port"`
 	ONTRPCAdress    string `json:"ONTRPCAdress"`
 	ScannerInterval int    `json:"ScannerInterval"`
+	GasPrice        uint64 `json:"GasPrice"`
+	GasLimit        uint64 `json:"GasLimit"`
+	ContractAddress string `json:"ContractAddress"`
 }
 
 var Configuration *Config

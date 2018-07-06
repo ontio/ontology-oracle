@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	sdk "github.com/ontio/ontology-go-sdk"
 	"github.com/ontio/ontology-oracle/config"
 	"github.com/ontio/ontology-oracle/core"
 	"github.com/ontio/ontology-oracle/http"
@@ -12,7 +13,7 @@ import (
 	"github.com/ontio/ontology/account"
 	"github.com/ontio/ontology/common"
 	"github.com/urfave/cli"
-	sdk "github.com/ontio/ontology-go-sdk"
+	"github.com/ontio/ontology/common/password"
 )
 
 // Client is the shell for the node. It has fields for the Renderer,
@@ -27,19 +28,24 @@ func (client *Client) RunNode(c *cli.Context) error {
 
 	log.Info("Starting Oracle Node... ")
 	log.Info("Open the account")
-	if !common.FileExisted(account.WALLET_FILENAME) {
-		log.Fatal(fmt.Sprintf("No %s detected, please create a wallet.", account.WALLET_FILENAME))
+	if !common.FileExisted(config.Configuration.WalletFile) {
+		log.Fatal(fmt.Sprintf("No %s detected, please create a wallet.", config.Configuration.WalletFile))
 		os.Exit(1)
 	}
 	ontSdk := sdk.NewOntologySdk()
-	wallet, err := ontSdk.OpenWallet(account.WALLET_FILENAME, c.String("password"))
+	wallet, err := ontSdk.OpenWallet(config.Configuration.WalletFile)
 	if err != nil {
-		log.Fatal("Can't open local wallet.")
+		log.Fatalf("Can't open local wallet: %s", err)
 		os.Exit(1)
 	}
-	acct, err := wallet.GetDefaultAccount()
+	pwd, err := password.GetPassword()
 	if err != nil {
-		log.Fatal("Can't get default account.")
+		log.Fatalf("password.GetPassword erro: %sr", err)
+		os.Exit(1)
+	}
+	acct, err := wallet.GetDefaultAccount(pwd)
+	if err != nil {
+		log.Fatalf("Can't get default account: %s", err)
 		os.Exit(1)
 	}
 

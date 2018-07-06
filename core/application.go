@@ -7,7 +7,6 @@ import (
 	"syscall"
 	"time"
 
-	sdkcom "github.com/ontio/ontology-go-sdk/common"
 	"github.com/ontio/ontology-go-sdk/rpc"
 	"github.com/ontio/ontology-oracle/config"
 	"github.com/ontio/ontology-oracle/log"
@@ -67,8 +66,6 @@ func (app *OracleApplication) JobRunner() {
 			continue
 		}
 		switch strings.ToLower(job.Scheduler.Type) {
-		//case "cron":
-		//	go app.ExecuteCron(job)
 		default:
 			jobRun := job.NewRun()
 			go app.ExecuteRun(jobRun)
@@ -78,7 +75,7 @@ func (app *OracleApplication) JobRunner() {
 
 func (app *OracleApplication) OntScanner() {
 	log.Info("Start getting undo request in oracle contract.")
-	app.RPC = rpc.NewRpcClient(sdkcom.CRYPTO_SCHEME_DEFAULT)
+	app.RPC = rpc.NewRpcClient()
 	app.RPC.SetAddress(config.Configuration.ONTRPCAdress)
 
 	timer := time.NewTimer(time.Duration(config.Configuration.ScannerInterval) * time.Second)
