@@ -19,13 +19,6 @@ func Run(client *node.Client, args ...string) {
 	app.Commands = []cli.Command{
 		{
 			Name:    "node",
-			Aliases: []string{"n"},
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "password, p",
-					Usage: "password for the node's account",
-				},
-			},
 			Usage:  "Run the oracle node",
 			Action: client.RunNode,
 		},
@@ -36,6 +29,5 @@ func Run(client *node.Client, args ...string) {
 func NewProductionClient() *node.Client {
 	return &node.Client{
 		AppFactory: node.OracleAppFactory{},
-		Runner:     node.OracleRunner{},
 	}
 }

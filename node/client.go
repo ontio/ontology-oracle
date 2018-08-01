@@ -3,28 +3,27 @@ package node
 import (
 	"fmt"
 	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/gin-gonic/gin"
 	sdk "github.com/ontio/ontology-go-sdk"
 	"github.com/ontio/ontology-oracle/config"
 	"github.com/ontio/ontology-oracle/core"
-	"github.com/ontio/ontology-oracle/http"
 	"github.com/ontio/ontology-oracle/log"
 	"github.com/ontio/ontology/account"
 	"github.com/ontio/ontology/common"
-	"github.com/urfave/cli"
 	"github.com/ontio/ontology/common/password"
+	"github.com/urfave/cli"
 )
 
-// Client is the shell for the node. It has fields for the Renderer,
-// Config, AppFactory (the services application), Authenticator, and Runner.
+// Client is the shell for the node. It has fields for the
+// AppFactory (the services application).
 type Client struct {
 	AppFactory AppFactory
-	Runner     Runner
 }
 
 // RunNode starts the oracle node.
-func (client *Client) RunNode(c *cli.Context) error {
+func (client *Client) RunNode(c *cli.Context) {
 
 	log.Info("Starting Oracle Node... ")
 	log.Info("Open the account")
@@ -54,14 +53,7 @@ func (client *Client) RunNode(c *cli.Context) error {
 	app.Start()
 	defer app.Stop()
 
-	return client.errorOut(client.Runner.Run(app))
-}
-
-func (client *Client) errorOut(err error) error {
-	if err != nil {
-		return cli.NewExitError(err.Error(), 1)
-	}
-	return nil
+	waitToExit()
 }
 
 // AppFactory implements the NewApplication method.
@@ -77,18 +69,16 @@ func (n OracleAppFactory) NewApplication(account *account.Account) core.Applicat
 	return core.NewApplication(account)
 }
 
-// Runner implements the Run method.
-type Runner interface {
-	Run(core.Application) error
-}
-
-// OracleRunner is used to run the node application.
-type OracleRunner struct{}
-
-// Run sets the log level based on config and starts the web router to listen
-// for input and return data.
-func (n OracleRunner) Run(app core.Application) error {
-	port := config.Configuration.Port
-	gin.SetMode(gin.DebugMode)
-	return http.Router(app.(*core.OracleApplication)).Run(":" + port)
+func waitToExit() {
+	exit := make(chan bool, 0)
+	sc := make(chan os.Signal, 1)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	go func() {
+		for sig := range sc {
+			log.Infof("Ontology Oracle received exit signal:%v.", sig.String())
+			close(exit)
+			break
+		}
+	}()
+	<-exit
 }

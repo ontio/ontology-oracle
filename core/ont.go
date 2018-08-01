@@ -1,7 +1,6 @@
 package core
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -9,9 +8,10 @@ import (
 	"github.com/ontio/ontology-oracle/log"
 	"github.com/ontio/ontology-oracle/models"
 	"github.com/ontio/ontology-oracle/utils"
+	"github.com/ontio/ontology/smartcontract/service/neovm"
+	"bytes"
+	"github.com/ontio/ontology/common"
 )
-
-var Version = byte(0)
 
 type UndoRequests struct {
 	Requests map[string]interface{} `json:"requests"`
@@ -29,7 +29,7 @@ func (app *OracleApplication) AddUndoRequests() error {
 		return fmt.Errorf("utils.GetContractAddress error:%s", err)
 	}
 
-	value, err := app.RPC.GetStorage(contractAddress, []byte("UndoTxHash"))
+	value, err := app.RPC.GetStorage(contractAddress, []byte("UndoRequest"))
 	if err != nil {
 		return fmt.Errorf("GetStorage UndoTxHash error:%s", err)
 	}
@@ -37,59 +37,60 @@ func (app *OracleApplication) AddUndoRequests() error {
 		return nil
 	}
 
-	undoRequests := &UndoRequests{
-		Requests: make(map[string]interface{}),
-	}
-	err = json.Unmarshal(value, &undoRequests)
+	bf := bytes.NewBuffer(value)
+	items, err := neovm.DeserializeStackItem(bf)
 	if err != nil {
-		return fmt.Errorf("Unmarshal UndoRequests: %s", err)
+		return fmt.Errorf("neovm.DeserializeStackItem error:%s", err)
 	}
-
-	for txHash := range undoRequests.Requests {
-		tx, err := utils.ParseUint256FromHexString(txHash)
-		events, err := app.RPC.GetSmartContractEvent(tx)
+	requestMap, err := items.GetMap()
+	if err != nil {
+		return fmt.Errorf("items.GetMap error:%s", err)
+	}
+	for k, v := range requestMap {
+		txHashBytes , err := k.GetByteArray()
 		if err != nil {
-			return fmt.Errorf("GetSmartContractEvent error:%s", err)
+			return fmt.Errorf("k.GetByteArray error:%s", err)
 		}
-
-		name := (events[1].States[0]).(string)
-		if name != "createOracleRequest" {
-			return nil
+		requestBytes , err := v.GetByteArray()
+		if err != nil {
+			return fmt.Errorf("v.GetByteArray error:%s", err)
 		}
+		request := string(requestBytes)
 
-		request := (events[1].States[1]).(map[string]interface{})
-
-		address := hex.EncodeToString(app.Account.Address[:])
-		if request["oracleNode"].(string) != address {
-			fmt.Println("a")
-			return nil
+		tx, err := common.Uint256ParseFromBytes(txHashBytes)
+		if err != nil {
+			return fmt.Errorf("common.Uint256ParseFromBytes error:%s", err)
 		}
 
 		j := models.JobSpec{}
-		err = json.Unmarshal([]byte(request["request"].(string)), &j)
+		err = json.Unmarshal([]byte(request), &j)
 		if err != nil {
 			return fmt.Errorf("json.Unmarshal error:%s", err)
 		}
-		j.ID = txHash
+		j.ID = tx.ToHexString()
 		app.AddJob(&j)
 
 		log.Debugf("Ontology Scanner get request txHash: %v", j.ID)
 	}
+
 	return nil
 }
 
 func (app *OracleApplication) sendDataToContract(jr models.JobRun) error {
-	operation := "setOracleOutcome"
-	txHash := jr.JobID
+	operation := "SetOracleOutcome"
+	txHash, err := common.Uint256FromHexString(jr.JobID)
+	if err != nil {
+		return fmt.Errorf("common.AddressFromHexString error:%s", err)
+	}
 	dataString := jr.Result.Data.Get("value").String()
 
-	args := []interface{}{operation, txHash, dataString}
+	args := []interface{}{operation, []interface{}{txHash[:], []byte(dataString)}}
 	contractAddress, err := utils.GetContractAddress()
 	if err != nil {
 		return fmt.Errorf("utils.GetContractAddress error:%s", err)
 	}
 	_, err = app.RPC.InvokeNeoVMContract(config.Configuration.GasPrice, config.Configuration.GasLimit, app.Account,
-		contractAddress, []interface{}{args})
+		contractAddress, args)
 	if err != nil {
 		return fmt.Errorf("InvokeNeoVMContract error:%s", err)
 	}

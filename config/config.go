@@ -18,7 +18,6 @@ type Config struct {
 	WalletFile      string `json:"WalletFile"`
 	LogLevel        int    `json:"LogLevel"`
 	MaxLogSize      int64  `json:"MaxLogSize"`
-	Port            string `json:"Port"`
 	ONTRPCAdress    string `json:"ONTRPCAdress"`
 	ScannerInterval int    `json:"ScannerInterval"`
 	GasPrice        uint64 `json:"GasPrice"`

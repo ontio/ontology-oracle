@@ -1,6 +1,9 @@
 {
+  "WalletFile": "./wallet.dat",
   "LogLevel": 0,
-  "Port": "6688",
   "ONTRPCAdress": "http://127.0.0.1:20336",
-  "ScannerInterval": 3
+  "ScannerInterval": 10000,
+  "GasPrice": 0,
+  "GasLimit": 20000,
+  "ContractAddress": "e48b9cd040a8f1865064e66e77eaeb4b01b5882f"
 }

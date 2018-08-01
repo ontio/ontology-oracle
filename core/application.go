@@ -77,6 +77,10 @@ func (app *OracleApplication) OntScanner() {
 	log.Info("Start getting undo request in oracle contract.")
 	app.RPC = rpc.NewRpcClient()
 	app.RPC.SetAddress(config.Configuration.ONTRPCAdress)
+	err := app.AddUndoRequests()
+	if err != nil {
+		log.Errorf("OntScanner error: %v", err)
+	}
 
 	timer := time.NewTimer(time.Duration(config.Configuration.ScannerInterval) * time.Second)
 	defer timer.Stop()
