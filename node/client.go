@@ -10,7 +10,6 @@ import (
 	"github.com/ontio/ontology-oracle/config"
 	"github.com/ontio/ontology-oracle/core"
 	"github.com/ontio/ontology-oracle/log"
-	"github.com/ontio/ontology/account"
 	"github.com/ontio/ontology/common"
 	"github.com/ontio/ontology/common/password"
 	"github.com/urfave/cli"
@@ -58,14 +57,14 @@ func (client *Client) RunNode(c *cli.Context) {
 
 // AppFactory implements the NewApplication method.
 type AppFactory interface {
-	NewApplication(*account.Account) core.Application
+	NewApplication(*sdk.Account) core.Application
 }
 
 // AppFactory is used to create a new Application.
 type OracleAppFactory struct{}
 
 // NewApplication returns a new instance of the node with the given config.
-func (n OracleAppFactory) NewApplication(account *account.Account) core.Application {
+func (n OracleAppFactory) NewApplication(account *sdk.Account) core.Application {
 	return core.NewApplication(account)
 }
 

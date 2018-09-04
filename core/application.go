@@ -7,11 +7,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ontio/ontology-go-sdk/rpc"
+	sdk "github.com/ontio/ontology-go-sdk"
 	"github.com/ontio/ontology-oracle/config"
 	"github.com/ontio/ontology-oracle/log"
 	"github.com/ontio/ontology-oracle/models"
-	"github.com/ontio/ontology/account"
 )
 
 // Application implements the common functions used in the core node.
@@ -21,19 +20,22 @@ type Application interface {
 }
 
 type OracleApplication struct {
-	Account   *account.Account
+	Account   *sdk.Account
 	JobList   chan *models.JobSpec
 	DoingJobs map[string]interface{}
-	RPC       *rpc.RpcClient
+	Ont       *sdk.OntologySdk
 	Exiter    func(int)
 }
 
-func NewApplication(acct *account.Account) Application {
+func NewApplication(acct *sdk.Account) Application {
 	jobList := make(chan *models.JobSpec, 10)
+	ontSdk := sdk.NewOntologySdk()
+	ontSdk.NewRpcClient().SetAddress(config.Configuration.ONTRPCAdress)
 	return &OracleApplication{
 		Account:   acct,
 		JobList:   jobList,
 		DoingJobs: make(map[string]interface{}),
+		Ont:       ontSdk,
 		Exiter:    os.Exit,
 	}
 }
@@ -75,8 +77,6 @@ func (app *OracleApplication) JobRunner() {
 
 func (app *OracleApplication) OntScanner() {
 	log.Info("Start getting undo request in oracle contract.")
-	app.RPC = rpc.NewRpcClient()
-	app.RPC.SetAddress(config.Configuration.ONTRPCAdress)
 	err := app.AddUndoRequests()
 	if err != nil {
 		log.Errorf("OntScanner error: %v", err)

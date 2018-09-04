@@ -18,7 +18,7 @@ func Run(client *node.Client, args ...string) {
 	app.Usage = "cli for ontology-oracle"
 	app.Commands = []cli.Command{
 		{
-			Name:    "node",
+			Name:   "node",
 			Usage:  "Run the oracle node",
 			Action: client.RunNode,
 		},

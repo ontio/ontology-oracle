@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/ontio/ontology-oracle/config"
 	"github.com/ontio/ontology/common"
 	"github.com/satori/go.uuid"
-	"github.com/ontio/ontology-oracle/config"
 )
 
 // NewBytes32ID returns a randomly generated UUID

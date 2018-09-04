@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"bytes"
 	"github.com/ontio/ontology-oracle/config"
 	"github.com/ontio/ontology-oracle/log"
 	"github.com/ontio/ontology-oracle/models"
 	"github.com/ontio/ontology-oracle/utils"
-	"github.com/ontio/ontology/smartcontract/service/neovm"
-	"bytes"
 	"github.com/ontio/ontology/common"
+	"github.com/ontio/ontology/smartcontract/service/neovm"
 )
 
 type UndoRequests struct {
@@ -29,7 +29,7 @@ func (app *OracleApplication) AddUndoRequests() error {
 		return fmt.Errorf("utils.GetContractAddress error:%s", err)
 	}
 
-	value, err := app.RPC.GetStorage(contractAddress, []byte("UndoRequest"))
+	value, err := app.Ont.GetStorage(contractAddress.ToHexString(), []byte("UndoRequest"))
 	if err != nil {
 		return fmt.Errorf("GetStorage UndoTxHash error:%s", err)
 	}
@@ -47,11 +47,11 @@ func (app *OracleApplication) AddUndoRequests() error {
 		return fmt.Errorf("items.GetMap error:%s", err)
 	}
 	for k, v := range requestMap {
-		txHashBytes , err := k.GetByteArray()
+		txHashBytes, err := k.GetByteArray()
 		if err != nil {
 			return fmt.Errorf("k.GetByteArray error:%s", err)
 		}
-		requestBytes , err := v.GetByteArray()
+		requestBytes, err := v.GetByteArray()
 		if err != nil {
 			return fmt.Errorf("v.GetByteArray error:%s", err)
 		}
@@ -89,7 +89,7 @@ func (app *OracleApplication) sendDataToContract(jr models.JobRun) error {
 	if err != nil {
 		return fmt.Errorf("utils.GetContractAddress error:%s", err)
 	}
-	_, err = app.RPC.InvokeNeoVMContract(config.Configuration.GasPrice, config.Configuration.GasLimit, app.Account,
+	_, err = app.Ont.NeoVM.InvokeNeoVMContract(config.Configuration.GasPrice, config.Configuration.GasLimit, app.Account,
 		contractAddress, args)
 	if err != nil {
 		return fmt.Errorf("InvokeNeoVMContract error:%s", err)
