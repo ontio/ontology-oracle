@@ -35,15 +35,13 @@ func (app *OracleApplication) executeRun(jobRun models.JobRun) models.JobRun {
 	jobRun.Status = models.RunStatusInProgress
 
 	log.Infof("Starting job run: %v, JobID is: %v", jobRun.ID, jobRun.JobID)
-	unfinished := jobRun.UnfinishedTaskRuns()
-	offset := len(jobRun.TaskRuns) - len(unfinished)
-	latestRun := unfinished[0]
+	latestRun := jobRun.TaskRuns[0]
 
-	for i, taskRun := range unfinished {
+	for i, taskRun := range jobRun.TaskRuns {
 
 		log.Debugf("Starting task run: %v", taskRun.ID)
 		latestRun = markCompleted(startTask(taskRun, latestRun.Result))
-		jobRun.TaskRuns[i+offset] = latestRun
+		jobRun.TaskRuns[i] = latestRun
 		if latestRun.Result.Status == models.RunStatusErrored {
 			break
 		}

@@ -21,20 +21,6 @@ func (jr JobRun) ApplyResult(result RunResult) JobRun {
 	return jr
 }
 
-func (jr JobRun) UnfinishedTaskRuns() []TaskRun {
-	unfinished := jr.TaskRuns
-	for _, tr := range jr.TaskRuns {
-		if tr.Status.Completed() {
-			unfinished = unfinished[1:]
-		} else if tr.Status.Errored() {
-			return []TaskRun{}
-		} else {
-			return unfinished
-		}
-	}
-	return unfinished
-}
-
 type TaskRun struct {
 	ID     string    `json:"id"`
 	Result RunResult `json:"result"`
