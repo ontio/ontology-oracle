@@ -22,16 +22,15 @@ func (httpGet *HTTPGet) Perform(input models.RunResult) models.RunResult {
 	defer response.Body.Close()
 
 	bytes, err := ioutil.ReadAll(response.Body)
-	body := string(bytes)
 	if err != nil {
 		return input.WithError(err)
 	}
 
 	if response.StatusCode >= 400 {
-		return input.WithError(fmt.Errorf(body))
+		return input.WithError(fmt.Errorf(string(bytes)))
 	}
 
-	return input.WithValue(body)
+	return input.WithValue(bytes)
 }
 
 type HTTPPost struct {
@@ -39,7 +38,7 @@ type HTTPPost struct {
 }
 
 func (httpPost *HTTPPost) Perform(input models.RunResult) models.RunResult {
-	reqBody := bytes.NewBufferString(input.Data.String())
+	reqBody := bytes.NewBuffer(input.Data)
 	response, err := http.Post(httpPost.URL.String(), "application/json", reqBody)
 	if err != nil {
 		return input.WithError(err)
@@ -48,14 +47,13 @@ func (httpPost *HTTPPost) Perform(input models.RunResult) models.RunResult {
 	defer response.Body.Close()
 
 	bytes, err := ioutil.ReadAll(response.Body)
-	body := string(bytes)
 	if err != nil {
 		return input.WithError(err)
 	}
 
 	if response.StatusCode >= 400 {
-		return input.WithError(fmt.Errorf(body))
+		return input.WithError(fmt.Errorf(string(bytes)))
 	}
 
-	return input.WithValue(body)
+	return input.WithValue(bytes)
 }

@@ -1,62 +1,81 @@
 package runners
 
 import (
-	"encoding/json"
-	"errors"
+	"fmt"
+	"strconv"
+
 	"github.com/bitly/go-simplejson"
 	"github.com/ontio/ontology-oracle/models"
-	"strconv"
+	"github.com/ontio/ontology/smartcontract/service/neovm"
+	"github.com/ontio/ontology/vm/neovm/types"
+	"math/big"
+	"strings"
 )
 
 type JSONParse struct {
+	Data []Data `json:"data"`
+}
+
+type Data struct {
+	Type string   `json:"type"`
 	Path []string `json:"path"`
 }
 
 func (jsonParse *JSONParse) Perform(input models.RunResult) models.RunResult {
-	val, err := input.Value()
+	js, err := simplejson.NewJson(input.Data)
 	if err != nil {
 		return input.WithError(err)
 	}
 
-	js, err := simplejson.NewJson([]byte(val))
-	if err != nil {
-		return input.WithError(err)
-	}
-
-	js, err = getEarlyPath(js, jsonParse.Path)
-	if err != nil {
-		return input.WithError(err)
-	}
-
-	rval, ok := js.CheckGet(jsonParse.Path[len(jsonParse.Path)-1])
-	if !ok {
-		input.Data, err = input.Data.Add("value", nil)
+	stackArray := []types.StackItems{}
+	for _, data := range jsonParse.Data {
+		js, err = getByPath(js, data.Path)
 		if err != nil {
 			return input.WithError(err)
 		}
-		return input
+		switch strings.ToLower(data.Type) {
+		case "string":
+			result, err := getStringValue(js)
+			if err != nil {
+				return input.WithError(err)
+			}
+			ba := types.NewByteArray([]byte(result))
+			stackArray = append(stackArray, ba)
+		case "int":
+			result, err := getIntValue(js)
+			if err != nil {
+				return input.WithError(err)
+			}
+			int := types.NewInteger(new(big.Int).SetInt64(result))
+			stackArray = append(stackArray, int)
+		}
 	}
-
-	result, err := getStringValue(rval)
+	stru := types.NewStruct(stackArray)
+	result, err := neovm.SerializeStackItem(stru)
 	if err != nil {
 		return input.WithError(err)
 	}
+
 	return input.WithValue(result)
 }
 
 func getStringValue(js *simplejson.Json) (string, error) {
 	str, err := js.String()
 	if err != nil {
-		b, err := json.Marshal(js)
-		if err != nil {
-			return str, err
-		}
-		str = string(b)
+		return str, err
 	}
 	return str, nil
 }
 
-func getEarlyPath(js *simplejson.Json, path []string) (*simplejson.Json, error) {
+func getIntValue(js *simplejson.Json) (int64, error) {
+	int64, err := js.Int64()
+	if err != nil {
+		return int64, err
+	}
+	return int64, nil
+}
+
+func getByPath(js *simplejson.Json, path []string) (*simplejson.Json, error) {
 	var ok bool
 	for _, k := range path[:len(path)-1] {
 		if isArray(js, k) {
@@ -65,7 +84,7 @@ func getEarlyPath(js *simplejson.Json, path []string) (*simplejson.Json, error) 
 			js, ok = js.CheckGet(k)
 		}
 		if !ok {
-			return js, errors.New("No value could be found for the key '" + k + "'")
+			return js, fmt.Errorf("No value could be found for the key '" + k + "'")
 		}
 	}
 	return js, nil

@@ -88,7 +88,7 @@ func (j JSON) Merge(j2 JSON) (JSON, error) {
 	}
 
 	var rval JSON
-	return rval, gjson.Unmarshal(b, &rval)
+	return rval, json.Unmarshal(b, &rval)
 }
 
 // Empty returns true if the JSON does not exist.

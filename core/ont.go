@@ -82,9 +82,8 @@ func (app *OracleApplication) sendDataToContract(jr models.JobRun) error {
 	if err != nil {
 		return fmt.Errorf("common.AddressFromHexString error:%s", err)
 	}
-	dataString := jr.Result.Data.Get("value").String()
 
-	args := []interface{}{operation, []interface{}{txHash[:], []byte(dataString)}}
+	args := []interface{}{operation, []interface{}{txHash[:], jr.Result.Data}}
 	contractAddress, err := utils.GetContractAddress()
 	if err != nil {
 		return fmt.Errorf("utils.GetContractAddress error:%s", err)
