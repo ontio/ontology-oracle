@@ -1,7 +1,7 @@
 {
   "WalletFile": "./wallet.dat",
   "LogLevel": 0,
-  "ONTRPCAdress": "http://127.0.0.1:20336",
+  "ONTRPCAddress": "http://127.0.0.1:20336",
   "ScannerInterval": 10,
   "GasPrice": 0,
   "GasLimit": 20000,

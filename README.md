@@ -39,45 +39,62 @@ Address要申请成为Oracle Node的钱包地址，Guaranty需要抵押至少100
 ### 配置
 ```text
 {
+  "WalletFile": "./wallet.dat",
   "LogLevel": 0,
-  "Port": "6688",
-  "MaxLogSize": 50,
-  "ONTRPCAdress": "http://127.0.0.1:20336",
-  "ScannerInterval": 3,
+  "ONTRPCAddress": "http://127.0.0.1:20336",
+  "ScannerInterval": 10,
+  "GasPrice": 0,
+  "GasLimit": 20000,
+  "ContractAddress": "f4d61a76b766638061ef73f896637545c6198b99"
 }
 ```
-LogLevel配置日志级别， port配置node的http端口，MaxLogSize配置单个日志文件的大小，不指定默认20M，ONTRPCAdress配置ontology网络的rpc地址，ScannerInterval配置node扫描ontology网络中oracle请求的时间间隔。
+WalletFile配置签名钱包路径，LogLevel配置日志级别，ONTRPCAddress配置node的http端口，MaxLogSize配置单个日志文件的大小，不指定默认20M，ONTRPCAdress配置ontology网络的rpc地址，ScannerInterval配置node扫描ontology网络中oracle请求的时间间隔，ContractAddress配置对应的oracle合约地址。
 
 ### 启动oracle node
-生成钱包文件wallet.dat，-p参数为钱包密码
 ```text
-go run main.go node -p passwordtest
+go run main.go node
 ```
 
 ### 创建oracle request
 调用部署在ontology网络上的oracle contract，示例参数：
 ```go
-var operation = "createOracleRequest"
+var operation = "CreateOracleRequest"
 var request = `{
-"scheduler":{
-    "type": "runAfter",
-    "params": "2018-06-15 08:37:18"
-},
-"tasks":[
-  {
-    "type": "httpGet",
-    "params": {
-      "url": "https://bitstamp.net/api/ticker/"
-    }
-  },
-  {
-    "type": "jsonParse",
-    "params": {
-      "path": ["last"]
-    }
-  }
-]
-}`
+		"scheduler":{
+			"type": "runAfter",
+			"params": "2018-06-15 08:37:18"
+		},
+		"tasks":[
+			{
+			  "type": "httpGet",
+			  "params": {
+				"url": "https://bitstamp.net/api/ticker/"
+			  }
+			},
+			{
+				"type": "jsonParse",
+				"params":
+				{
+					"data":
+					[
+						{
+							"type": "String",
+							"path": ["timestamp"]
+						},
+						{
+							"type": "String",
+							"path": ["last"]
+						},
+						{
+							"type": "Float",
+							"decimal": 100,
+							"path": ["open"]
+						}
+					 ]
+				}
+			}
+		]
+	}`
 var args = []interface{}{request, address}
 ```
 ### job定义
@@ -99,7 +116,7 @@ job由scheduler和一系列的task组成，schedule的类型目前支持runAfter
 #### RunAfter
 该类型的job会在指定的时间之后执行，如赛事结果oracle可以将其设置为赛事结束之后。
 
-param: 代表时间的字符串，格式如"2018-06-15 08:37:18"
+params: 代表时间的字符串，格式如"2018-06-15 08:37:18"
 
 ### task定义
 ```text
@@ -111,14 +128,14 @@ param: 代表时间的字符串，格式如"2018-06-15 08:37:18"
 #### HttpGet
 该类型的task会向指定url发送Get请求。
 
-param:
+params:
 
 url: get请求的发送地址
 
 #### HttpPost
 该类型的task会向指定url发送Post请求。
 
-param:
+params:
 
 url: post请求的发送地址
 
@@ -127,13 +144,21 @@ data: post请求要发送的数据内容
 #### JsonParse
 该类型的task会以path参数为key逐层遍历，返回得到的value结果。
 
-param:
+params:
+
+data: 所要获取的数据结构。
+
+type: 数据类型，支持int，float（乘以精度按照int处理），string ，array，map。
+
+sub_type: array, map的子类型。
+
+decimal: 浮点数所要乘以的精度。
 
 path: 一个string数组，每个string作为下次获取的json数据的key。
 
 ### 获取oracle request的结果
 ```go
-var operation = "getOracleOutcome"
+var operation = "GetOracleOutcome"
 var args = []interface{}{txhash, address}
 ```
 txhash为oracle request在链上的交易hash。

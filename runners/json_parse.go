@@ -2,8 +2,8 @@ package runners
 
 import (
 	"fmt"
-	"strconv"
 	"math/big"
+	"strconv"
 	"strings"
 
 	"github.com/bitly/go-simplejson"

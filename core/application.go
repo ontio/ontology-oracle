@@ -30,7 +30,7 @@ type OracleApplication struct {
 func NewApplication(acct *sdk.Account) Application {
 	jobList := make(chan *models.JobSpec, 10)
 	ontSdk := sdk.NewOntologySdk()
-	ontSdk.NewRpcClient().SetAddress(config.Configuration.ONTRPCAdress)
+	ontSdk.NewRpcClient().SetAddress(config.Configuration.ONTRPCAddress)
 	return &OracleApplication{
 		Account:   acct,
 		JobList:   jobList,
