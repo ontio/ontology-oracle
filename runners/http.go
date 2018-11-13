@@ -34,12 +34,13 @@ func (httpGet *HTTPGet) Perform(input models.RunResult) models.RunResult {
 }
 
 type HTTPPost struct {
-	URL models.WebURL `json:"url"`
+	URL         models.WebURL `json:"url"`
+	ContentType string        `json:"contentType"`
+	Body        string        `json:"body"`
 }
 
 func (httpPost *HTTPPost) Perform(input models.RunResult) models.RunResult {
-	reqBody := bytes.NewBuffer(input.Data)
-	response, err := http.Post(httpPost.URL.String(), "application/json", reqBody)
+	response, err := http.Post(httpPost.URL.String(), httpPost.ContentType, bytes.NewReader([]byte(httpPost.Body)))
 	if err != nil {
 		return input.WithError(err)
 	}

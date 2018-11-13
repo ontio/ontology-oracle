@@ -13,7 +13,7 @@ func (app *OracleApplication) ExecuteRun(jobRun models.JobRun) {
 	if t.After(time.Now()) {
 		return
 	}
-	app.DoingJobs[jobRun.JobID] = new(interface{})
+	app.DoneJobs[jobRun.JobID] = new(interface{})
 	jobRun = app.executeRun(jobRun)
 	if jobRun.Status == models.RunStatusErrored {
 		log.Errorf("Current job run execution error: %v", jobRun.Result.ErrorMessage)
@@ -28,7 +28,6 @@ func (app *OracleApplication) ExecuteRun(jobRun models.JobRun) {
 			log.Infof("sendDataToContract success, Job ID is: %v", jobRun.JobID)
 		}
 	}
-	delete(app.DoingJobs, jobRun.JobID)
 }
 
 func (app *OracleApplication) executeRun(jobRun models.JobRun) models.JobRun {

@@ -34,7 +34,6 @@ namespace Ont.SmartContract
 
             Transaction tx = (Transaction)ExecutionEngine.ScriptContainer;
             byte[] txHash = tx.Hash;
-            //Runtime.Notify("txHash is :", txHash);
 
             Map<byte[], string> undoRequest = new Map<byte[], string>();
             byte[] v = Storage.Get(Storage.CurrentContext, "UndoRequest");

@@ -33,7 +33,7 @@ func (app *OracleApplication) AddUndoRequests() error {
 	if err != nil {
 		return fmt.Errorf("GetStorage UndoTxHash error:%s", err)
 	}
-	if len(value) == 0 {
+	if len(value) <= 2 {
 		return nil
 	}
 

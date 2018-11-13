@@ -1,6 +1,7 @@
 package runners
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -55,6 +56,9 @@ func (jsonParse *JSONParse) Perform(input models.RunResult) models.RunResult {
 			if err != nil {
 				return input.WithError(err)
 			}
+			if data.Decimal == 0 {
+				data.Decimal = 1
+			}
 			float := types.NewInteger(new(big.Int).SetInt64(int64(result * float64(data.Decimal))))
 			stackArray = append(stackArray, float)
 		case "array":
@@ -72,25 +76,28 @@ func (jsonParse *JSONParse) Perform(input models.RunResult) models.RunResult {
 						return input.WithError(fmt.Errorf("array field is not string"))
 					}
 					ba := types.NewByteArray([]byte(result))
-					stackArrayTemp = append(stackArray, ba)
+					stackArrayTemp = append(stackArrayTemp, ba)
 				}
 			case "int":
 				for _, temp := range tempArray {
-					result, ok := temp.(int64)
-					if !ok {
-						return input.WithError(fmt.Errorf("array field is not int"))
+					result, err := temp.(json.Number).Int64()
+					if err != nil {
+						return input.WithError(fmt.Errorf("array field is not int:%v", err))
 					}
 					int := types.NewInteger(new(big.Int).SetInt64(result))
-					stackArrayTemp = append(stackArray, int)
+					stackArrayTemp = append(stackArrayTemp, int)
 				}
 			case "float":
 				for _, temp := range tempArray {
-					result, ok := temp.(float64)
-					if !ok {
-						return input.WithError(fmt.Errorf("array field is not float"))
+					result, err := temp.(json.Number).Float64()
+					if err != nil {
+						return input.WithError(fmt.Errorf("array field is not float:%v", err))
+					}
+					if data.Decimal == 0 {
+						data.Decimal = 1
 					}
 					float := types.NewInteger(new(big.Int).SetInt64(int64(result * float64(data.Decimal))))
-					stackArrayTemp = append(stackArray, float)
+					stackArrayTemp = append(stackArrayTemp, float)
 				}
 			default:
 				return input.WithError(fmt.Errorf("data.SubType is not supported"))
@@ -115,18 +122,21 @@ func (jsonParse *JSONParse) Perform(input models.RunResult) models.RunResult {
 				}
 			case "int":
 				for k, v := range tempMap {
-					result, ok := v.(int64)
-					if !ok {
-						return input.WithError(fmt.Errorf("map field is not int"))
+					result, err := v.(json.Number).Int64()
+					if err != nil {
+						return input.WithError(fmt.Errorf("map field is not int:%v", err))
 					}
 					vStackItems := types.NewInteger(new(big.Int).SetInt64(result))
 					mp.Add(types.NewByteArray([]byte(k)), vStackItems)
 				}
 			case "float":
 				for k, v := range tempMap {
-					result, ok := v.(float64)
-					if !ok {
-						return input.WithError(fmt.Errorf("map field is not float"))
+					result, err := v.(json.Number).Float64()
+					if err != nil {
+						return input.WithError(fmt.Errorf("map field is not float:%v", err))
+					}
+					if data.Decimal == 0 {
+						data.Decimal = 1
 					}
 					vStackItems := types.NewInteger(new(big.Int).SetInt64(int64(result * float64(data.Decimal))))
 					mp.Add(types.NewByteArray([]byte(k)), vStackItems)

@@ -5,5 +5,6 @@
   "ScannerInterval": 10,
   "GasPrice": 0,
   "GasLimit": 20000,
-  "ContractAddress": "f4d61a76b766638061ef73f896637545c6198b99"
+  "ContractAddress": "f4d61a76b766638061ef73f896637545c6198b99",
+  "RandomOrgKey": "c7511065-c88d-4f28-af4f-293c91ad20d9"
 }

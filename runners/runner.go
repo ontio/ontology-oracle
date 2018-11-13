@@ -17,6 +17,9 @@ type Runner interface {
 // For determines the runner type to use for a given task
 func For(task models.TaskSpec) (r Runner, err error) {
 	switch strings.ToLower(task.Type) {
+	case "randomorg":
+		r = &RandomOrg{}
+		err = unmarshalParams(task.Params, r)
 	case "httpget":
 		r = &HTTPGet{}
 		err = unmarshalParams(task.Params, r)

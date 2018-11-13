@@ -23,6 +23,7 @@ type Config struct {
 	GasPrice        uint64 `json:"GasPrice"`
 	GasLimit        uint64 `json:"GasLimit"`
 	ContractAddress string `json:"ContractAddress"`
+	RandomOrgKey    string `json:"RandomOrgKey"`
 }
 
 var Configuration *Config

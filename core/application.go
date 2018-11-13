@@ -22,7 +22,7 @@ type Application interface {
 type OracleApplication struct {
 	Account   *sdk.Account
 	JobList   chan *models.JobSpec
-	DoingJobs map[string]interface{}
+	DoneJobs map[string]interface{}
 	Ont       *sdk.OntologySdk
 	Exiter    func(int)
 }
@@ -34,7 +34,7 @@ func NewApplication(acct *sdk.Account) Application {
 	return &OracleApplication{
 		Account:   acct,
 		JobList:   jobList,
-		DoingJobs: make(map[string]interface{}),
+		DoneJobs: make(map[string]interface{}),
 		Ont:       ontSdk,
 		Exiter:    os.Exit,
 	}
@@ -62,7 +62,7 @@ func (app *OracleApplication) Stop() {
 func (app *OracleApplication) JobRunner() {
 	for {
 		job := <-app.JobList
-		_, ok := app.DoingJobs[job.ID]
+		_, ok := app.DoneJobs[job.ID]
 		if ok {
 			log.Debugf("job %v is already on process", job.ID)
 			continue
