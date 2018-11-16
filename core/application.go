@@ -20,11 +20,11 @@ type Application interface {
 }
 
 type OracleApplication struct {
-	Account   *sdk.Account
-	JobList   chan *models.JobSpec
+	Account  *sdk.Account
+	JobList  chan *models.JobSpec
 	DoneJobs map[string]interface{}
-	Ont       *sdk.OntologySdk
-	Exiter    func(int)
+	Ont      *sdk.OntologySdk
+	Exiter   func(int)
 }
 
 func NewApplication(acct *sdk.Account) Application {
@@ -32,11 +32,11 @@ func NewApplication(acct *sdk.Account) Application {
 	ontSdk := sdk.NewOntologySdk()
 	ontSdk.NewRpcClient().SetAddress(config.Configuration.ONTRPCAddress)
 	return &OracleApplication{
-		Account:   acct,
-		JobList:   jobList,
+		Account:  acct,
+		JobList:  jobList,
 		DoneJobs: make(map[string]interface{}),
-		Ont:       ontSdk,
-		Exiter:    os.Exit,
+		Ont:      ontSdk,
+		Exiter:   os.Exit,
 	}
 }
 

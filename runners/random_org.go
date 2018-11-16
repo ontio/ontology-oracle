@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/AkshatM/caprice"
 	"github.com/ontio/ontology-oracle/config"
 	"github.com/ontio/ontology-oracle/models"
+	"github.com/siovanus/caprice"
 )
 
 type RandomOrg struct {
@@ -17,12 +17,17 @@ type RandomOrg struct {
 	Replacement bool   `json:"replacement"`
 }
 
+type IntegerData struct {
+	Data           []interface{} `json:"data"`
+	CompletionTime string        `json:"completionTime"`
+}
+
 type SignedIntegerData struct {
-	Raw          json.RawMessage `json:"raw"`
-	HashedApiKey string          `json:"hashedApiKey"`
-	SerialNumber int             `json:"serialNumber"`
-	Data         []int           `json:"data"`
-	Signature    string          `json:"signature"`
+	CompletionTime string `json:"completionTime"`
+	HashedApiKey   string `json:"hashedApiKey"`
+	SerialNumber   int    `json:"serialNumber"`
+	Data           []int  `json:"data"`
+	Signature      string `json:"signature"`
 }
 
 func (randomOrg *RandomOrg) Perform(input models.RunResult) models.RunResult {
@@ -39,7 +44,11 @@ func (randomOrg *RandomOrg) Perform(input models.RunResult) models.RunResult {
 		if err1.Message != "" {
 			return input.WithError(fmt.Errorf(err1.Message))
 		}
-		bytes, err = json.Marshal(result)
+		data := IntegerData{
+			CompletionTime: result.Random.CompletionTime,
+			Data:           result.Random.Data,
+		}
+		bytes, err = json.Marshal(data)
 		if err != nil {
 			return input.WithError(err)
 		}
@@ -49,11 +58,11 @@ func (randomOrg *RandomOrg) Perform(input models.RunResult) models.RunResult {
 			return input.WithError(fmt.Errorf(err1.Message))
 		}
 		data := SignedIntegerData{
-			Raw:          signedResult.Raw,
-			HashedApiKey: signedResult.HashedApiKey,
-			SerialNumber: signedResult.SerialNumber,
-			Data:         signedResult.Data,
-			Signature:    signedResult.Signature,
+			CompletionTime: signedResult.CompletionTime,
+			HashedApiKey:   signedResult.HashedApiKey,
+			SerialNumber:   signedResult.SerialNumber,
+			Data:           signedResult.Data,
+			Signature:      signedResult.Signature,
 		}
 		bytes, err = json.Marshal(data)
 		if err != nil {
