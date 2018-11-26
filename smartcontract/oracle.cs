@@ -11,6 +11,13 @@ namespace Ont.SmartContract
     {
         public static readonly byte[] admin = "AMAx993nE6NEqZjwBssUfopxnnvTdob9ij".ToScriptHash();
 
+        public class Result
+        {
+            public byte[] data;
+            public string status;
+            public string errMessage;
+        }
+
         public static object Main(string operation, params object[] args)
         {
             switch (operation)
@@ -18,7 +25,7 @@ namespace Ont.SmartContract
                 case "CreateOracleRequest":
                     return CreateOracleRequest((string)args[0], (byte[])args[1]);
                 case "SetOracleOutcome":
-                    return SetOracleOutcome((byte[])args[0], (byte[])args[1]);
+                    return SetOracleOutcome((byte[])args[0], (byte[])args[1], (string)args[2], (string)args[3]);
                 case "GetOracleOutcome":
                     return GetOracleOutcome((byte[])args[0]);
                 case "Migrate":
@@ -51,7 +58,7 @@ namespace Ont.SmartContract
             return true;
         }
 
-        public static bool SetOracleOutcome(byte[] txHash, byte[] result)
+        public static bool SetOracleOutcome(byte[] txHash, byte[] data, string status, string errMessage)
         {
             //check witness
             if (!Runtime.CheckWitness(admin))
@@ -60,7 +67,12 @@ namespace Ont.SmartContract
                 return false;
             }
 
-            Storage.Put(Storage.CurrentContext, txHash, result);
+            Result result = new Result();
+            result.data = data;
+            result.status = status;
+            result.errMessage= errMessage;
+            byte[] r = Helper.Serialize(result);
+            Storage.Put(Storage.CurrentContext, txHash, r);
 
             //remove txHash from undoRequest map
             Map<byte[], string> undoRequest = new Map<byte[], string>();

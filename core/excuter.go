@@ -17,15 +17,22 @@ func (app *OracleApplication) ExecuteRun(jobRun models.JobRun) {
 	jobRun = app.executeRun(jobRun)
 	if jobRun.Status == models.RunStatusErrored {
 		log.Errorf("Current job run execution error: %v", jobRun.Result.ErrorMessage)
+
+		err := app.sendDataToContract(jobRun)
+		if err != nil {
+			log.Errorf("send error data to contract error: %v", err.Error())
+		} else {
+			log.Infof("send error data to contract success, Job ID is: %v", jobRun.JobID)
+		}
 	}
 	if jobRun.Status == models.RunStatusCompleted {
 		log.Infof("Finished current job run execution: %v, Job result is: %v", jobRun.ID, jobRun.Result)
 
 		err := app.sendDataToContract(jobRun)
 		if err != nil {
-			log.Errorf("sendDataToContract error: %v", err.Error())
+			log.Errorf("send success data to contract error: %v", err.Error())
 		} else {
-			log.Infof("sendDataToContract success, Job ID is: %v", jobRun.JobID)
+			log.Infof("send success data to contract success, Job ID is: %v", jobRun.JobID)
 		}
 	}
 }
