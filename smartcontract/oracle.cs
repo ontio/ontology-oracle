@@ -21,6 +21,8 @@ namespace Ont.SmartContract
                     return SetOracleOutcome((byte[])args[0], (byte[])args[1]);
                 case "GetOracleOutcome":
                     return GetOracleOutcome((byte[])args[0]);
+                case "Migrate":
+                    return Migrate((byte[])args[0], (bool)args[1], (string)args[2], (string)args[3], (string)args[4], (string)args[5], (string)args[6]);
                 default:
                     return false;
             }
@@ -34,6 +36,7 @@ namespace Ont.SmartContract
 
             Transaction tx = (Transaction)ExecutionEngine.ScriptContainer;
             byte[] txHash = tx.Hash;
+            //Runtime.Notify("txHash is :", txHash);
 
             Map<byte[], string> undoRequest = new Map<byte[], string>();
             byte[] v = Storage.Get(Storage.CurrentContext, "UndoRequest");
@@ -50,7 +53,7 @@ namespace Ont.SmartContract
 
         public static bool SetOracleOutcome(byte[] txHash, byte[] result)
         {
-            //TODO: check witness
+            //check witness
             if (!Runtime.CheckWitness(admin))
             {
                 Runtime.Notify("Checkwitness failed.");
@@ -73,13 +76,26 @@ namespace Ont.SmartContract
             return true;
         }
 
-         public static byte[] GetOracleOutcome(byte[] txHash)
+        public static byte[] GetOracleOutcome(byte[] txHash)
         {
             byte[] v = Storage.Get(Storage.CurrentContext, txHash);
 
             //TODO: remove txHash from results
             Runtime.Notify(v);
             return v;
+        }
+
+        public static bool Migrate(byte[] code, bool need_storage, string name, string version, string author, string email, string description)
+        {
+            //check if owner of the contract
+            if (!Runtime.CheckWitness(admin))
+            {
+                Runtime.Notify("Checkwitness failed.");
+                return false;
+            }
+
+            Ont.SmartContract.Framework.Services.Ont.Contract.Migrate(code, need_storage, name, version, author, email, description);
+            return true;
         }
 
     }
