@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/ontio/ontology-oracle/log"
@@ -13,7 +14,16 @@ func (app *OracleApplication) ExecuteRun(jobRun models.JobRun) {
 	if t.After(time.Now()) {
 		return
 	}
-	app.DoneJobs[jobRun.JobID] = new(interface{})
+	v, err := json.Marshal(jobRun)
+	if err != nil {
+		log.Errorf("json.Marshal job error : %v", err)
+		return
+	}
+	err = app.Store.Put([]byte(jobRun.JobID), v, nil)
+	if err != nil {
+		log.Errorf("put job into db error : %v", err)
+		return
+	}
 	jobRun = app.executeRun(jobRun)
 	if jobRun.Status == models.RunStatusErrored {
 		log.Errorf("Current job run execution error: %v", jobRun.Result.ErrorMessage)
@@ -72,9 +82,9 @@ func startTask(taskRun models.TaskRun, input models.RunResult) models.TaskRun {
 	runner, err := runners.For(taskRun.Task)
 
 	if err != nil {
-		taskRun.Status = models.RunStatusErrored
-		taskRun.Result.ErrorMessage = err.Error()
-		return taskRun
+		log.Errorf("create runners error: %v", err)
+		rr := taskRun.Result.WithError(err)
+		return taskRun.ApplyResult(rr)
 	}
 
 	return taskRun.ApplyResult(runner.Perform(input))

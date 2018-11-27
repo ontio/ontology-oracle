@@ -54,7 +54,7 @@ GetOracleOutcome(byte[] txHash)
   "ScannerInterval": 10,
   "GasPrice": 0,
   "GasLimit": 20000,
-  "ContractAddress": "f4d61a76b766638061ef73f896637545c6198b99",
+  "ContractAddress": "a6ceb31d2f4694eb5dc049d518828c3c06e050ca",
 }
 ```
 WalletFile配置签名钱包路径，LogLevel配置日志级别，ONTRPCAddress配置监听的ontology网络rpc的地址和端口，MaxLogSize配置单个日志文件的大小，不指定默认20M，ScannerInterval配置node扫描ontology网络中oracle请求的时间间隔，ContractAddress配置对应的oracle合约地址。
@@ -75,7 +75,7 @@ go run main.go node
 ### httpGet
 ```text
 operation = "CreateOracleRequest"
-request = `{
+request = """{
 		"scheduler":{
 			"type": "runAfter",
 			"params": "2018-06-15 08:37:18"
@@ -110,7 +110,7 @@ request = `{
 				}
 			}
 		]
-	}`
+	}"""
 args = [request, address]
 ```
 http response:
@@ -162,7 +162,7 @@ params: 代表时间的字符串，格式如"2018-06-15 08:37:18"
 ### httpPost
 ```text
 operation = "CreateOracleRequest"
-request = `{
+request = """{
 		"scheduler":{
 			"type": "runAfter",
 			"params": "2018-06-15 08:37:18"
@@ -173,7 +173,7 @@ request = `{
 			  "params": {
 				"url": "https://api.random.org/json-rpc/1/invoke",
 				"contentType": "application/json-rpc",
-				"body": "{\"jsonrpc\": \"2.0\",\"method\": \"generateSignedIntegers\",\"params\": {\"apiKey\": \"c7511065-c88d-4f28-af4f-293c91ad20d9\",\"n\": 6,\"min\": 1,\"max\": 10,\"replacement\": false,\"base\": 10},\"id\": 1}"
+				"body": "{"jsonrpc": "2.0","method": "generateSignedIntegers","params": {"apiKey": "c7511065-c88d-4f28-af4f-293c91ad20d9","n": 6,"min": 1,"max": 10,"replacement": false,"base": 10},"id": 1}"
 			  }
 			},
 			{
@@ -191,7 +191,7 @@ request = `{
 				}
 			}
 		]
-	}`
+	}"""
 args = [request, address]
 ```
 http response:
@@ -233,7 +233,7 @@ http response:
 #### 签名随机数
 ```text
 operation = "CreateOracleRequest"
-request = `{
+request = """{
 		"scheduler":{
 			"type": "runAfter",
 			"params": "2018-06-15 08:37:18"
@@ -268,7 +268,7 @@ request = `{
 				}
 			}
 		]
-	}`
+	}"""
 args = [request, address]
 ```
 其中n为获取的随机数的个数，min为随机数最小值，max为随机数最大值，replacement为是否允许重复。
@@ -286,7 +286,7 @@ type SignedIntegerData struct {
 #### 非签名随机数
 ```text
 operation = "CreateOracleRequest"
-request = `{
+request = """{
 		"scheduler":{
 			"type": "runAfter",
 			"params": "2018-06-15 08:37:18"
@@ -311,17 +311,17 @@ request = `{
 						{
 							"type": "Array",
 							"sub_type": "Int",
-							"path": ["random", "data"]
+							"path": ["data"]
 						},
 						{
 							"type": "String",
-							"path": ["random", "completionTime"]
+							"path": ["completionTime"]
 						}
 					 ]
 				}
 			}
 		]
-	}`
+	}"""
 args = [request, address]
 ```
 其中n为获取的随机数的个数，min为随机数最小值，max为随机数最大值，replacement为是否允许重复。
