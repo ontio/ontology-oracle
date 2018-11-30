@@ -1,7 +1,6 @@
 package core
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/ontio/ontology-oracle/log"
@@ -9,19 +8,10 @@ import (
 	"github.com/ontio/ontology-oracle/runners"
 )
 
-func (app *OracleApplication) ExecuteRun(jobRun models.JobRun) {
+func (app *OracleApplication) RunJob(job *models.JobSpec) {
+	jobRun := job.NewRun()
 	t, _ := time.Parse("2006-01-02 15:04:05", jobRun.Scheduler.Params)
 	if t.After(time.Now()) {
-		return
-	}
-	v, err := json.Marshal(jobRun)
-	if err != nil {
-		log.Errorf("json.Marshal job error : %v", err)
-		return
-	}
-	err = app.Store.Put([]byte(jobRun.JobID), v, nil)
-	if err != nil {
-		log.Errorf("put job into db error : %v", err)
 		return
 	}
 	jobRun = app.executeRun(jobRun)
@@ -31,6 +21,7 @@ func (app *OracleApplication) ExecuteRun(jobRun models.JobRun) {
 		err := app.sendDataToContract(jobRun)
 		if err != nil {
 			log.Errorf("send error data to contract error: %v", err.Error())
+			return
 		} else {
 			log.Infof("send error data to contract success, Job ID is: %v", jobRun.JobID)
 		}
@@ -41,9 +32,15 @@ func (app *OracleApplication) ExecuteRun(jobRun models.JobRun) {
 		err := app.sendDataToContract(jobRun)
 		if err != nil {
 			log.Errorf("send success data to contract error: %v", err.Error())
+			return
 		} else {
 			log.Infof("send success data to contract success, Job ID is: %v", jobRun.JobID)
 		}
+	}
+
+	err := app.Store.Put([]byte(jobRun.JobID), job.Request, nil)
+	if err != nil {
+		log.Errorf("put request into db error : %v", err)
 	}
 }
 

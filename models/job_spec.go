@@ -8,6 +8,7 @@ type JobSpec struct {
 	ID        string        `json:"id"`
 	Scheduler SchedulerSpec `json:"scheduler"`
 	Tasks     []TaskSpec    `json:"tasks"`
+	Request   []byte        `json:"request"`
 }
 
 func (j JobSpec) NewRun() JobRun {

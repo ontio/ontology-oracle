@@ -92,18 +92,13 @@ func (app *OracleApplication) JobRunner() {
 
 		switch strings.ToLower(job.Scheduler.Type) {
 		default:
-			jobRun := job.NewRun()
-			go app.ExecuteRun(jobRun)
+			go app.RunJob(job)
 		}
 	}
 }
 
 func (app *OracleApplication) OntScanner() {
 	log.Info("Start getting undo request in oracle contract.")
-	err := app.AddUndoRequests()
-	if err != nil {
-		log.Errorf("OntScanner error: %v", err)
-	}
 
 	timer := time.NewTimer(time.Duration(config.Configuration.ScannerInterval) * time.Second)
 	defer timer.Stop()

@@ -1,10 +1,10 @@
 package core
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
-	"bytes"
 	"github.com/ontio/ontology-oracle/config"
 	"github.com/ontio/ontology-oracle/log"
 	"github.com/ontio/ontology-oracle/models"
@@ -49,25 +49,46 @@ func (app *OracleApplication) AddUndoRequests() error {
 	for k, v := range requestMap {
 		txHashBytes, err := k.GetByteArray()
 		if err != nil {
-			return fmt.Errorf("k.GetByteArray error:%s", err)
+			log.Errorf("k.GetByteArray error:%s", err)
 		}
 		requestBytes, err := v.GetByteArray()
 		if err != nil {
-			return fmt.Errorf("v.GetByteArray error:%s", err)
+			log.Errorf("v.GetByteArray error:%s", err)
 		}
 		request := string(requestBytes)
 
 		tx, err := common.Uint256ParseFromBytes(txHashBytes)
 		if err != nil {
-			return fmt.Errorf("common.Uint256ParseFromBytes error:%s", err)
+			log.Errorf("common.Uint256ParseFromBytes error:%s", err)
 		}
 
 		j := models.JobSpec{}
+		j.ID = tx.ToHexString()
+		j.Request = requestBytes
 		err = json.Unmarshal([]byte(request), &j)
 		if err != nil {
-			return fmt.Errorf("json.Unmarshal error:%s", err)
+			log.Errorf("json.Unmarshal error:%s", err)
+			rr := models.RunResult{
+				JobRunID:     j.ID,
+				Status:       models.RunStatusErrored,
+				ErrorMessage: err.Error(),
+			}
+			jr := models.JobRun{
+				JobID: j.ID,
+			}
+			jr = jr.ApplyResult(rr)
+			err := app.sendDataToContract(jr)
+			if err != nil {
+				log.Errorf("send error data to contract error: %v", err.Error())
+			} else {
+				log.Infof("send error data to contract success, Job ID is: %v", jr.JobID)
+			}
+			err = app.Store.Put([]byte(jr.JobID), requestBytes, nil)
+			if err != nil {
+				log.Errorf("put request into db error : %v", err)
+			}
+			continue
 		}
-		j.ID = tx.ToHexString()
 		app.AddJob(&j)
 
 		log.Debugf("Ontology Scanner get request txHash: %v", j.ID)

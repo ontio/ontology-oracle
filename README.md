@@ -54,7 +54,7 @@ GetOracleOutcome(byte[] txHash)
   "ScannerInterval": 10,
   "GasPrice": 0,
   "GasLimit": 20000,
-  "ContractAddress": "a6ceb31d2f4694eb5dc049d518828c3c06e050ca",
+  "ContractAddress": "ca5744eadc5234b8d712560641ffa08d0ec63bf8",
 }
 ```
 WalletFile配置签名钱包路径，LogLevel配置日志级别，ONTRPCAddress配置监听的ontology网络rpc的地址和端口，MaxLogSize配置单个日志文件的大小，不指定默认20M，ScannerInterval配置node扫描ontology网络中oracle请求的时间间隔，ContractAddress配置对应的oracle合约地址。
