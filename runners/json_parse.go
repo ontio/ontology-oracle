@@ -1,11 +1,11 @@
 package runners
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/big"
 	"strconv"
 	"strings"
+	"encoding/json"
 
 	"github.com/bitly/go-simplejson"
 	"github.com/ontio/ontology-oracle/models"
@@ -14,14 +14,14 @@ import (
 )
 
 type JSONParse struct {
-	Data []Data `json:"data"`
+	Data []*OracleParamAbi `json:"data"`
 }
 
-type Data struct {
-	Type    string   `json:"type"`
-	SubType string   `json:"sub_type"`
-	Decimal uint64   `json:"decimal"`
-	Path    []string `json:"path"`
+type OracleParamAbi struct {
+	Type    string            `json:"type"`
+	Path    []string          `json:"path"`
+	Decimal uint64            `json:"decimal"`
+	SubType []*OracleParamAbi `json:"sub_type"`
 }
 
 func (jsonParse *JSONParse) Perform(input models.RunResult) models.RunResult {
@@ -30,129 +30,105 @@ func (jsonParse *JSONParse) Perform(input models.RunResult) models.RunResult {
 		return input.WithError(err)
 	}
 
-	stackArray := []types.StackItems{}
-	for _, data := range jsonParse.Data {
-		js, err := getByPath(jsa, data.Path)
-		if err != nil {
-			return input.WithError(err)
-		}
-		switch strings.ToLower(data.Type) {
-		case "string":
-			result, err := getStringValue(js)
-			if err != nil {
-				return input.WithError(err)
-			}
-			ba := types.NewByteArray([]byte(result))
-			stackArray = append(stackArray, ba)
-		case "int":
-			result, err := getIntValue(js)
-			if err != nil {
-				return input.WithError(err)
-			}
-			int := types.NewInteger(new(big.Int).SetInt64(result))
-			stackArray = append(stackArray, int)
-		case "float":
-			result, err := getFloatValue(js)
-			if err != nil {
-				return input.WithError(err)
-			}
-			if data.Decimal == 0 {
-				data.Decimal = 1
-			}
-			float := types.NewInteger(new(big.Int).SetInt64(int64(result * float64(data.Decimal))))
-			stackArray = append(stackArray, float)
-		case "array":
-			tempArray, err := js.Array()
-			if err != nil {
-				return input.WithError(err)
-			}
-			stackArrayTemp := []types.StackItems{}
-
-			switch strings.ToLower(data.SubType) {
-			case "string":
-				for _, temp := range tempArray {
-					result, ok := temp.(string)
-					if !ok {
-						return input.WithError(fmt.Errorf("array field is not string"))
-					}
-					ba := types.NewByteArray([]byte(result))
-					stackArrayTemp = append(stackArrayTemp, ba)
-				}
-			case "int":
-				for _, temp := range tempArray {
-					result, err := temp.(json.Number).Int64()
-					if err != nil {
-						return input.WithError(fmt.Errorf("array field is not int:%v", err))
-					}
-					int := types.NewInteger(new(big.Int).SetInt64(result))
-					stackArrayTemp = append(stackArrayTemp, int)
-				}
-			case "float":
-				for _, temp := range tempArray {
-					result, err := temp.(json.Number).Float64()
-					if err != nil {
-						return input.WithError(fmt.Errorf("array field is not float:%v", err))
-					}
-					if data.Decimal == 0 {
-						data.Decimal = 1
-					}
-					float := types.NewInteger(new(big.Int).SetInt64(int64(result * float64(data.Decimal))))
-					stackArrayTemp = append(stackArrayTemp, float)
-				}
-			default:
-				return input.WithError(fmt.Errorf("data.SubType is not supported"))
-			}
-			array := types.NewArray(stackArrayTemp)
-			stackArray = append(stackArray, array)
-		case "map":
-			tempMap, err := js.Map()
-			if err != nil {
-				return input.WithError(err)
-			}
-			mp := types.NewMap()
-			switch strings.ToLower(data.SubType) {
-			case "string":
-				for k, v := range tempMap {
-					result, ok := v.(string)
-					if !ok {
-						return input.WithError(fmt.Errorf("map field is not string"))
-					}
-					vStackItems := types.NewByteArray([]byte(result))
-					mp.Add(types.NewByteArray([]byte(k)), vStackItems)
-				}
-			case "int":
-				for k, v := range tempMap {
-					result, err := v.(json.Number).Int64()
-					if err != nil {
-						return input.WithError(fmt.Errorf("map field is not int:%v", err))
-					}
-					vStackItems := types.NewInteger(new(big.Int).SetInt64(result))
-					mp.Add(types.NewByteArray([]byte(k)), vStackItems)
-				}
-			case "float":
-				for k, v := range tempMap {
-					result, err := v.(json.Number).Float64()
-					if err != nil {
-						return input.WithError(fmt.Errorf("map field is not float:%v", err))
-					}
-					if data.Decimal == 0 {
-						data.Decimal = 1
-					}
-					vStackItems := types.NewInteger(new(big.Int).SetInt64(int64(result * float64(data.Decimal))))
-					mp.Add(types.NewByteArray([]byte(k)), vStackItems)
-				}
-			}
-			stackArray = append(stackArray, mp)
-		default:
-			return input.WithError(fmt.Errorf("data.Type is not supported"))
-		}
-	}
-	stru := types.NewStruct(stackArray)
-	result, err := neovm.SerializeStackItem(stru)
+	result, err := parseStruct(jsa, jsonParse.Data)
 	if err != nil {
 		return input.WithError(err)
 	}
-	return input.WithValue(result)
+	stru := types.NewStruct(result)
+	b, err := neovm.SerializeStackItem(stru)
+	if err != nil {
+		return input.WithError(err)
+	}
+	return input.WithValue(b)
+}
+
+func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) ([]types.StackItems, error) {
+	temp1 := []types.StackItems{}
+	for _, data := range dataList {
+		js, err := getByPath(jsa, data.Path)
+		if err != nil {
+			return nil, err
+		}
+		switch strings.ToLower(data.Type) {
+		case "array":
+			temp2 := []types.StackItems{}
+			tempArray, err := js.Array()
+			if err != nil {
+				return nil, err
+			}
+			for _, item := range tempArray {
+				b, err := json.Marshal(item)
+				if err != nil {
+					return nil, err
+				}
+				jst, err := simplejson.NewJson(b)
+				if err != nil {
+					return nil, err
+				}
+				result, err := parseStruct(jst, data.SubType)
+				if err != nil {
+					return nil, err
+				}
+				array := types.NewStruct(result)
+				temp2 = append(temp2, array)
+			}
+			temp1 = append(temp1, types.NewArray(temp2))
+		case "map":
+			temp3 := types.NewMap()
+			tempMap, err := js.Map()
+			if err != nil {
+				return nil, err
+			}
+
+			for k, v := range tempMap {
+				b, err := json.Marshal(v)
+				if err != nil {
+					return nil, err
+				}
+				jst, err := simplejson.NewJson(b)
+				if err != nil {
+					return nil, err
+				}
+				result, err := parseStruct(jst, data.SubType)
+				if err != nil {
+					return nil, err
+				}
+				vStackItems := types.NewStruct(result)
+				temp3.Add(types.NewByteArray([]byte(k)), vStackItems)
+			}
+			temp1 = append(temp1, temp3)
+		default:
+			switch strings.ToLower(data.Type) {
+			case "string":
+				r, err := getStringValue(js)
+				if err != nil {
+					return nil, err
+				}
+				ba := types.NewByteArray([]byte(r))
+				temp1 = append(temp1, ba)
+			case "int":
+				r, err := getIntValue(js)
+				if err != nil {
+					return nil, err
+				}
+				int := types.NewInteger(new(big.Int).SetInt64(r))
+				temp1 = append(temp1, int)
+			case "float":
+				r, err := getFloatValue(js)
+				if err != nil {
+					return nil, err
+				}
+				if data.Decimal == 0 {
+					data.Decimal = 1
+				}
+				float := types.NewInteger(new(big.Int).SetInt64(int64(r * float64(data.Decimal))))
+				temp1 = append(temp1, float)
+			default:
+				return nil, fmt.Errorf("data.Type is not supported")
+			}
+		}
+	}
+	return temp1, nil
 }
 
 func getStringValue(js *simplejson.Json) (string, error) {
