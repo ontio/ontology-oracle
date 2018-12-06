@@ -34,16 +34,15 @@ func (jsonParse *JSONParse) Perform(input models.RunResult) models.RunResult {
 	if err != nil {
 		return input.WithError(err)
 	}
-	stru := types.NewStruct(result)
-	b, err := neovm.SerializeStackItem(stru)
+	b, err := neovm.SerializeStackItem(result)
 	if err != nil {
 		return input.WithError(err)
 	}
 	return input.WithValue(b)
 }
 
-func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) ([]types.StackItems, error) {
-	temp1 := []types.StackItems{}
+func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) (types.StackItems, error) {
+	temp1 := types.NewStruct(nil)
 	for _, data := range dataList {
 		js, err := getByPath(jsa, data.Path)
 		if err != nil {
@@ -51,7 +50,7 @@ func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) ([]types.Stac
 		}
 		switch strings.ToLower(data.Type) {
 		case "array":
-			temp2 := []types.StackItems{}
+			temp2 := types.NewArray(nil)
 			tempArray, err := js.Array()
 			if err != nil {
 				return nil, err
@@ -69,10 +68,9 @@ func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) ([]types.Stac
 				if err != nil {
 					return nil, err
 				}
-				array := types.NewStruct(result)
-				temp2 = append(temp2, array)
+				temp2.Add(result)
 			}
-			temp1 = append(temp1, types.NewArray(temp2))
+			temp1.Add(temp2)
 		case "map":
 			temp3 := types.NewMap()
 			tempMap, err := js.Map()
@@ -93,10 +91,9 @@ func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) ([]types.Stac
 				if err != nil {
 					return nil, err
 				}
-				vStackItems := types.NewStruct(result)
-				temp3.Add(types.NewByteArray([]byte(k)), vStackItems)
+				temp3.Add(types.NewByteArray([]byte(k)), result)
 			}
-			temp1 = append(temp1, temp3)
+			temp1.Add(temp3)
 		default:
 			switch strings.ToLower(data.Type) {
 			case "string":
@@ -105,14 +102,14 @@ func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) ([]types.Stac
 					return nil, err
 				}
 				ba := types.NewByteArray([]byte(r))
-				temp1 = append(temp1, ba)
+				temp1.Add(ba)
 			case "int":
 				r, err := getIntValue(js)
 				if err != nil {
 					return nil, err
 				}
 				int := types.NewInteger(new(big.Int).SetInt64(r))
-				temp1 = append(temp1, int)
+				temp1.Add(int)
 			case "float":
 				r, err := getFloatValue(js)
 				if err != nil {
@@ -122,7 +119,7 @@ func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) ([]types.Stac
 					data.Decimal = 1
 				}
 				float := types.NewInteger(new(big.Int).SetInt64(int64(r * float64(data.Decimal))))
-				temp1 = append(temp1, float)
+				temp1.Add(float)
 			default:
 				return nil, fmt.Errorf("data.Type is not supported")
 			}
