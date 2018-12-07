@@ -1,11 +1,11 @@
 package runners
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strconv"
 	"strings"
-	"encoding/json"
 
 	"github.com/bitly/go-simplejson"
 	"github.com/ontio/ontology-oracle/models"
@@ -30,19 +30,20 @@ func (jsonParse *JSONParse) Perform(input models.RunResult) models.RunResult {
 		return input.WithError(err)
 	}
 
-	result, err := parseStruct(jsa, jsonParse.Data)
+	results, err := parseStruct(jsa, jsonParse.Data)
 	if err != nil {
 		return input.WithError(err)
 	}
-	b, err := neovm.SerializeStackItem(result)
+	stakeItem := types.NewStruct(results)
+	b, err := neovm.SerializeStackItem(stakeItem)
 	if err != nil {
 		return input.WithError(err)
 	}
 	return input.WithValue(b)
 }
 
-func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) (types.StackItems, error) {
-	temp1 := types.NewStruct(nil)
+func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) ([]types.StackItems, error) {
+	temp1 := []types.StackItems{}
 	for _, data := range dataList {
 		js, err := getByPath(jsa, data.Path)
 		if err != nil {
@@ -64,20 +65,21 @@ func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) (types.StackI
 				if err != nil {
 					return nil, err
 				}
-				result, err := parseStruct(jst, data.SubType)
+				results, err := parseStruct(jst, data.SubType)
 				if err != nil {
 					return nil, err
 				}
-				temp2.Add(result)
+				for _, result := range results {
+					temp2.Add(result)
+				}
 			}
-			temp1.Add(temp2)
+			temp1 = append(temp1, temp2)
 		case "map":
 			temp3 := types.NewMap()
 			tempMap, err := js.Map()
 			if err != nil {
 				return nil, err
 			}
-
 			for k, v := range tempMap {
 				b, err := json.Marshal(v)
 				if err != nil {
@@ -87,13 +89,25 @@ func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) (types.StackI
 				if err != nil {
 					return nil, err
 				}
-				result, err := parseStruct(jst, data.SubType)
+				results, err := parseStruct(jst, data.SubType)
 				if err != nil {
 					return nil, err
 				}
-				temp3.Add(types.NewByteArray([]byte(k)), result)
+				for _, result := range results {
+					temp3.Add(types.NewByteArray([]byte(k)), result)
+				}
 			}
-			temp1.Add(temp3)
+			temp1 = append(temp1, temp3)
+		case "struct":
+			temp4 := types.NewStruct(nil)
+			results, err := parseStruct(js, data.SubType)
+			if err != nil {
+				return nil, err
+			}
+			for _, result := range results {
+				temp4.Add(result)
+			}
+			temp1 = append(temp1, temp4)
 		default:
 			switch strings.ToLower(data.Type) {
 			case "string":
@@ -102,14 +116,14 @@ func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) (types.StackI
 					return nil, err
 				}
 				ba := types.NewByteArray([]byte(r))
-				temp1.Add(ba)
+				temp1 = append(temp1, ba)
 			case "int":
 				r, err := getIntValue(js)
 				if err != nil {
 					return nil, err
 				}
 				int := types.NewInteger(new(big.Int).SetInt64(r))
-				temp1.Add(int)
+				temp1 = append(temp1, int)
 			case "float":
 				r, err := getFloatValue(js)
 				if err != nil {
@@ -119,7 +133,7 @@ func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) (types.StackI
 					data.Decimal = 1
 				}
 				float := types.NewInteger(new(big.Int).SetInt64(int64(r * float64(data.Decimal))))
-				temp1.Add(float)
+				temp1 = append(temp1, float)
 			default:
 				return nil, fmt.Errorf("data.Type is not supported")
 			}
