@@ -93,7 +93,7 @@ namespace Ont.SmartContract
             byte[] v = Storage.Get(Storage.CurrentContext, txHash);
 
             //TODO: remove txHash from results
-            Runtime.Notify(v);
+            Runtime.Notify("Get oracle outcome:", v);
             return v;
         }
 

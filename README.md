@@ -136,7 +136,7 @@ url: http get请求的地址url
 
 params:
 
-data: 所要获取的数据结构。
+data: 所要获取的数据结构，以结构体的形式返回。
 
 type: 数据类型，支持int，float（乘以精度按照int处理），string ，array，map。
 
@@ -146,6 +146,119 @@ decimal: 浮点数所要乘以的精度。
 
 path: 一个数组，每个元素作为下次获取数据的索引, 如果数据为json, 则是该json数据的key, 如果数据为array, 则是该数据的index。
 
+下面给出一个更复杂的JsonParse案例：
+
+```text
+var request = """{
+		"scheduler":{
+			"type": "runAfter",
+			"params": "2018-06-15 08:37:18"
+		},
+		"tasks":[
+			{
+			  "type": "httpGet",
+			  "params": {
+				"url": "http://data.nba.net/prod/v2/20181129/scoreboard.json"
+			  }
+			},
+			{
+				"type": "jsonParse",
+				"params":
+				{
+					"data":
+					[
+						{
+							"type": "Array",
+							"path": ["games"],
+							"sub_type":
+							[
+								{
+									"type": "Struct",
+									"sub_type":
+									[
+										{
+											"type": "String",
+											"path": ["gameId"]
+										},
+										{
+											"type": "String",
+											"path": ["vTeam", "teamId"]
+										},
+										{
+											"type": "String",
+											"path": ["vTeam", "score"]
+										},
+										{
+											"type": "String",
+											"path": ["hTeam", "teamId"]
+										},
+										{
+											"type": "String",
+											"path": ["hTeam", "score"]
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			}
+		]
+	}"""
+```
+
+原始返回格式为：
+```text
+{
+	"numGames": 3,
+	"games": [{
+			"gameId": "0021800316",
+			"vTeam": {
+				"teamId": "1610612744",
+				"score": "128"
+			},
+			"hTeam": {
+				"teamId": "1610612761",
+				"score": "131"
+			}
+		},
+		{
+			"gameId": "0021800317",
+			"vTeam": {
+				"teamId": "2610612744",
+				"score": "96"
+			},
+			"hTeam": {
+				"teamId": "2610612761",
+				"score": "131"
+			}
+		},
+		{
+			"gameId": "0021800318",
+			"vTeam": {
+				"teamId": "3610612744",
+				"score": "128"
+			},
+			"hTeam": {
+				"teamId": "3610612761",
+				"score": "131"
+			}
+		}
+	]
+}
+```
+该案例返回一个结构体，结构体中有一个数组，数组元素仍为结构体，每个元素结构体中有五个元素。
+
+合约解析后的返回如下：
+```text
+[
+    [
+        ["0021800316", "1610612744", "128", "1610612761", "131"],
+        ["0021800317", "2610612744", "128", "2610612761", "131"],
+        ["0021800318", "3610612744", "128", "3610612761", "131"]
+    ]
+]
+```
 ### scheduler定义
 ```text
 {
@@ -163,35 +276,40 @@ params: 代表时间的字符串，格式如"2018-06-15 08:37:18"
 ```text
 operation = "CreateOracleRequest"
 request = """{
-		"scheduler":{
-			"type": "runAfter",
-			"params": "2018-06-15 08:37:18"
-		},
-		"tasks":[
-			{
-			  "type": "httpPost",
-			  "params": {
-				"url": "https://api.random.org/json-rpc/1/invoke",
-				"contentType": "application/json-rpc",
-				"body": "{"jsonrpc": "2.0","method": "generateSignedIntegers","params": {"apiKey": "c7511065-c88d-4f28-af4f-293c91ad20d9","n": 6,"min": 1,"max": 10,"replacement": false,"base": 10},"id": 1}"
-			  }
-			},
-			{
-				"type": "jsonParse",
-				"params":
-				{
-					"data":
-					[
-						{
-							"type": "Array",
-							"sub_type": "Int",
-							"path": ["result", "random", "data"]
-						}
-					 ]
-				}
-			}
-		]
-	}"""
+        "scheduler":{
+            "type": "runAfter",
+            "params": "2018-06-15 08:37:18"
+        },
+        "tasks":[
+            {
+              "type": "httpPost",
+              "params": {
+                "url": "https://api.random.org/json-rpc/1/invoke",
+                "contentType": "application/json-rpc",
+                "body": "{\\"jsonrpc\\": \\"2.0\\",\\"method\\": \\"generateSignedIntegers\\",\\"params\\": {\\"apiKey\\": \\"c7511065-c88d-4f28-af4f-293c91ad20d9\\",\\"n\\": 6,\\"min\\": 1,\\"max\\": 10,\\"replacement\\": false,\\"base\\": 10},\\"id\\": 1}"
+              }
+            },
+            {
+                "type": "jsonParse",
+                "params":
+                {
+                    "data":
+                    [
+                        {
+                            "type": "Array",
+                            "path": ["result", "random", "data"],
+                            "sub_type":
+                                [
+                                    {
+                                        "type": "Int"
+                                    }
+                                ]
+                        }
+                    ]
+                }
+            }
+        ]
+    }"""
 args = [request, address]
 ```
 http response:
@@ -227,48 +345,67 @@ http response:
     "id": 1
 }
 ```
+该案例返回一个结构体，结构体中有一个数组，数组中有6个元素。
 
+合约解析后的返回如下：
+```text
+[
+    [
+        2,
+        4,
+        4,
+        1,
+        5,
+        3
+    ]
+]
+```
 ### randomOrg
 上述httpPost的例子其实是在random.org获取签名随机数，目前的oracle模板专门为random.org的随机数封装了一个更简便的调用方法randomOrg。
 #### 签名随机数
 ```text
 operation = "CreateOracleRequest"
 request = """{
-		"scheduler":{
-			"type": "runAfter",
-			"params": "2018-06-15 08:37:18"
-		},
-		"tasks":[
-			{
-			  "type": "randomOrg",
-			  "params": {
-				"method": "GenerateSignedIntegers",
-				"n": 10,
-				"min": 1,
-				"max": 10,
-				"replacement": false
-			  }
-			},
-			{
-				"type": "jsonParse",
-				"params":
-				{
-					"data":
-					[
-						{
-							"type": "Array",
-							"sub_type": "Int",
-							"path": ["data"]
-						},
-						{
-							"type": "String",
-							"path": ["signature"]
-						}
-					 ]
-				}
-			}
-		]
-	}"""
+        "scheduler":{
+            "type": "runAfter",
+            "params": "2018-06-15 08:37:18"
+        },
+        "tasks":[
+            {
+              "type": "randomOrg",
+              "params": {
+                "method": "GenerateSignedIntegers",
+                "n": 10,
+                "min": 1,
+                "max": 10,
+                "replacement": false
+              }
+            },
+            {
+                "type": "jsonParse",
+                "params":
+                {
+                    "data":
+                    [
+                        {
+                            "type": "Array",
+                            "path": ["data"],
+                            "sub_type":
+                                [
+                                    {
+                                        "type": "Int"
+                                    }
+                                ]
+                        },
+                        {
+                            "type": "String",
+                            "path": ["signature"]
+                        }
+                    ]
+                }
+            }
+        ]
+    }"""
 args = [request, address]
 ```
 其中n为获取的随机数的个数，min为随机数最小值，max为随机数最大值，replacement为是否允许重复。
@@ -285,43 +422,47 @@ type SignedIntegerData struct {
 ```
 #### 非签名随机数
 ```text
-operation = "CreateOracleRequest"
-request = """{
-		"scheduler":{
-			"type": "runAfter",
-			"params": "2018-06-15 08:37:18"
-		},
-		"tasks":[
-			{
-			  "type": "randomOrg",
-			  "params": {
-				"method": "GenerateIntegers",
-				"n": 10,
-				"min": 1,
-				"max": 10,
-				"replacement": false
-			  }
-			},
-			{
-				"type": "jsonParse",
-				"params":
-				{
-					"data":
-					[
-						{
-							"type": "Array",
-							"sub_type": "Int",
-							"path": ["data"]
-						},
-						{
-							"type": "String",
-							"path": ["completionTime"]
-						}
-					 ]
-				}
-			}
-		]
-	}"""
+operation = "{
+        "scheduler":{
+            "type": "runAfter",
+            "params": "2018-06-15 08:37:18"
+        },
+        "tasks":[
+            {
+              "type": "randomOrg",
+              "params": {
+                "method": "GenerateIntegers",
+                "n": 10,
+                "min": 1,
+                "max": 10,
+                "replacement": false
+              }
+            },
+            {
+                "type": "jsonParse",
+                "params":
+                {
+                    "data":
+                    [
+                        {
+                            "type": "Array",
+                            "path": ["data"],
+                            "sub_type":
+                                [
+                                    {
+                                        "type": "Int"
+                                    }
+                                ]
+                        },
+                        {
+                            "type": "String",
+                            "path": ["completionTime"]
+                        }
+                    ]
+                }
+            }
+        ]
+    }"""
 args = [request, address]
 ```
 其中n为获取的随机数的个数，min为随机数最小值，max为随机数最大值，replacement为是否允许重复。
