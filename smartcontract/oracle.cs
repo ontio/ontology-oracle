@@ -37,13 +37,10 @@ namespace Ont.SmartContract
 
         public static bool CreateOracleRequest(string request, byte[] address)
         {
-            //TODO: check request format
-
             //TODO: transfer ong
 
             Transaction tx = (Transaction)ExecutionEngine.ScriptContainer;
             byte[] txHash = tx.Hash;
-            //Runtime.Notify("txHash is :", txHash);
 
             Map<byte[], string> undoRequest = new Map<byte[], string>();
             byte[] v = Storage.Get(Storage.CurrentContext, "UndoRequest");
@@ -54,7 +51,7 @@ namespace Ont.SmartContract
 
             byte[] b = Helper.Serialize(undoRequest);
             Storage.Put(Storage.CurrentContext, "UndoRequest", b);
-            Runtime.Notify("CreateOracleRequest Done");
+            Runtime.Notify("CreateOracleRequest Done", txHash, request);
             return true;
         }
 
@@ -67,6 +64,14 @@ namespace Ont.SmartContract
                 return false;
             }
 
+            //get undoRequest map
+            Map<byte[], string> undoRequest = new Map<byte[], string>();
+            byte[] v = Storage.Get(Storage.CurrentContext, "UndoRequest");
+            if (v.Length != 0) {
+                undoRequest = (Map<byte[], string>)Helper.Deserialize(v);
+            }
+            //TODO: check if key exist
+
             Result result = new Result();
             result.data = data;
             result.status = status;
@@ -75,16 +80,11 @@ namespace Ont.SmartContract
             Storage.Put(Storage.CurrentContext, txHash, r);
 
             //remove txHash from undoRequest map
-            Map<byte[], string> undoRequest = new Map<byte[], string>();
-            byte[] v = Storage.Get(Storage.CurrentContext, "UndoRequest");
-            if (v.Length != 0) {
-                undoRequest = (Map<byte[], string>)Helper.Deserialize(v);
-            }
             undoRequest.Remove(txHash);
 
             byte[] b = Helper.Serialize(undoRequest);
             Storage.Put(Storage.CurrentContext, "UndoRequest", b);
-            Runtime.Notify("SetOracleOutcome Done");
+            Runtime.Notify("SetOracleOutcome Done", txHash, status, errMessage);
             return true;
         }
 
@@ -92,7 +92,6 @@ namespace Ont.SmartContract
         {
             byte[] v = Storage.Get(Storage.CurrentContext, txHash);
 
-            //TODO: remove txHash from results
             Runtime.Notify("Get oracle outcome:", v);
             return v;
         }
