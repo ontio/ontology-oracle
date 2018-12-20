@@ -2,7 +2,7 @@ from boa.interop.System.App import RegisterAppCall
 from boa.interop.System.ExecutionEngine import GetExecutingScriptHash
 from boa.interop.System.Runtime import Notify, Serialize, Deserialize
 
-oracleContract = RegisterAppCall('b869eed573863f8efdb3ae39d4963a781e81d4b3', 'operation', 'args')
+oracleContract = RegisterAppCall('06514a6f9a27d20ca59f9f14fdf699a22ebc1c58', 'operation', 'args')
 
 def main(operation, args):
     if operation == 'genRandom':
@@ -72,7 +72,7 @@ def genRandom():
 		]
 	}"""
 
-    oracleContract('CreateOracleRequest',[req,GetExecutingScriptHash()])
+    oracleContract('CreateOracleRequest',[req,ToScriptHash('AKQj23VWXpdRou1FCUX3g8XBcSxfBLiezp')])
 
 
     return True
@@ -87,4 +87,4 @@ def getRandom(txHash):
     Notify(b[0])
     Notify(b[0][0])
     Notify(b[0][0][0])
-    return true
+    return True

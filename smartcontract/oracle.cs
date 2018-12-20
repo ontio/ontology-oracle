@@ -9,13 +9,22 @@ namespace Ont.SmartContract
 {
     public class Oracle : Framework.SmartContract
     {
+        public static readonly byte[] ongAddr = "AFmseVrdL9f9oyCzZefL9tG6UbvhfRZMHJ".ToScriptHash();
         public static readonly byte[] admin = "AMAx993nE6NEqZjwBssUfopxnnvTdob9ij".ToScriptHash();
+        public static readonly ulong fee = 10000000;
 
         public class Result
         {
             public byte[] data;
             public string status;
             public string errMessage;
+        }
+
+        struct Transfer
+        {
+            public byte[] From;
+            public byte[] To;
+            public ulong Value;
         }
 
         public static object Main(string operation, params object[] args)
@@ -37,7 +46,9 @@ namespace Ont.SmartContract
 
         public static bool CreateOracleRequest(string request, byte[] address)
         {
-            //TODO: transfer ong
+            //transfer ong to oracle admin address
+            byte[] ret = Native.Invoke(0, ongAddr, "transfer", new object[1] { new Transfer { From = address, To = admin, Value = fee } });
+            if (ret[0] != 1) return false;
 
             Transaction tx = (Transaction)ExecutionEngine.ScriptContainer;
             byte[] txHash = tx.Hash;
@@ -57,7 +68,7 @@ namespace Ont.SmartContract
 
         public static bool SetOracleOutcome(byte[] txHash, byte[] data, string status, string errMessage)
         {
-            //check witness
+            //check if owner of the contract
             if (!Runtime.CheckWitness(admin))
             {
                 Runtime.Notify("Checkwitness failed.");
@@ -85,6 +96,7 @@ namespace Ont.SmartContract
             byte[] b = Helper.Serialize(undoRequest);
             Storage.Put(Storage.CurrentContext, "UndoRequest", b);
             Runtime.Notify("SetOracleOutcome Done", txHash, status, errMessage);
+
             return true;
         }
 
