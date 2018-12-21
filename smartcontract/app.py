@@ -4,7 +4,7 @@ from boa.interop.System.Runtime import Notify, Serialize, Deserialize
 from boa.builtins import *
 from ontology.interop.Ontology.Runtime import Base58ToAddress
 
-oracleContract = RegisterAppCall('ff4d2c2765346c9229201687604af4f59a0a334f', 'operation', 'args')
+oracleContract = RegisterAppCall('216d0074c0b45494724250c71c6a7b48aec73e05', 'operation', 'args')
 
 def main(operation, args):
     if operation == 'genRandom':
@@ -24,10 +24,10 @@ def genRandom():
 		},
 		"tasks":[
 			{
-			  "type": "httpGet",
-			  "params": {
-				"url": "http://data.nba.net/prod/v2/20181129/scoreboard.json"
-			  }
+			    "type": "httpGet",
+			    "params": {
+				    "url": "https://data.nba.net/prod/v2/20181129/scoreboard.json"
+			    }
 			},
 			{
 				"type": "jsonParse",

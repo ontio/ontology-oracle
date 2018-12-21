@@ -10,7 +10,7 @@ from ontology.interop.Ontology.Runtime import Base58ToAddress
 ######################### Global info ########################
 Admin = Base58ToAddress('AMAx993nE6NEqZjwBssUfopxnnvTdob9ij')
 ONGAddress = bytearray(b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02')
-fee = 10000000
+Fee = "Fee"
 UndoRequestKey = "UndoRequest"
 
 """
@@ -68,6 +68,11 @@ def Main(operation, args):
             return False
         txHash = args[0]
         return GetOracleOutcome(txHash)
+    if operation == "SetFee":
+        if len(args) != 1:
+            return False
+        fee = args[0]
+        return SetFee(fee)
     if operation == "MigrateContract":
         if len(args) !=7:
             return False
@@ -84,6 +89,7 @@ def CreateOracleRequest(request, address):
     #check witness
     RequireWitness(address)
 
+    fee = Get(GetContext(), Fee)
     #transfer ong to oracle admin address
     res = TransferONG(address, Admin, fee)
     if res == False:
@@ -126,6 +132,11 @@ def GetOracleOutcome(txHash):
     v = Get(GetContext(), txHash)
     Notify(["Get oracle outcome", v])
     return v
+
+def SetFee(fee):
+    RequireWitness(Admin)
+    Require(fee >= 0)
+    Put(GetContext(), Fee, fee)
 
 def MigrateContract(code, needStorage, name, version, author, email, description):
     RequireWitness(Admin)

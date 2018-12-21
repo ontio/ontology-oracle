@@ -26,16 +26,13 @@ oracle contract主要对node发送的数据进行聚集和存储，供其他合�
 ### Oracle运作流程
 ![workflow](/resources/workflow.png)
 
-# 如何成为Ontology oracle
-
-## 部署一本Oracle contract
-Oracle contract模板见smartcontract/oracle.cs
-### Oracle contract必须实现的标准方法
+# Oracle使用协议标准
+## Oracle contract必须实现的标准方法
 CreateOracleRequest(string request, byte[] address)
 
 该方法创建oracle请求，参数为请求本身和调用者的地址，该交易需要调用者地址签名该方法可能需要消耗额外的ong，由oracle服务提供方收取。
 
-SetOracleOutcome(byte[] txHash, byte[] result)
+SetOracleOutcome(byte[] txHash, byte[] data, string status, string errMessage)
 
 该方法只能由Oracle node调用，用于写入用户请求的数据。
 
@@ -43,33 +40,10 @@ GetOracleOutcome(byte[] txHash)
 
 该方法用于用户获取请求的数据。
 
-## 部署并运行Oracle node
-### Oracle node部署说明
-### 基本配置
-```text
-{
-  "WalletFile": "./wallet.dat",
-  "LogLevel": 0,
-  "ONTRPCAddress": "http://127.0.0.1:20336",
-  "ScannerInterval": 10,
-  "GasPrice": 0,
-  "GasLimit": 20000,
-  "ContractAddress": "ff4d2c2765346c9229201687604af4f59a0a334f",
-}
-```
-WalletFile配置签名钱包路径，LogLevel配置日志级别，ONTRPCAddress配置监听的ontology网络rpc的地址和端口，MaxLogSize配置单个日志文件的大小，不指定默认20M，ScannerInterval配置node扫描ontology网络中oracle请求的时间间隔，ContractAddress配置对应的oracle合约地址。
+Migrate(byte[] code, bool need_storage, string name, string version, string author, string email, string description)
 
-### build oracle node
-```text
-go build main.go
-```
+该方法用于合约升级。
 
-### 启动oracle node
-```text
-go run main.go node
-```
-
-# Oracle使用协议标准
 ## 创建oracle request
 用户可以在自己的合约中调用部署在ontology网络上的oracle contract来获取外部数据，目前支持httpGet， httpPost， random.Org获取随机数：
 ### httpGet
@@ -483,4 +457,6 @@ args = txhash
 ```
 txhash为oracle request在链上的交易hash。
 
-
+# 代码示例
+Oracle contract模板见smartcontract/oracle.py(smartcontract/oracle.cs)
+使用Oracle的合约模板见smartcontract/app.py
