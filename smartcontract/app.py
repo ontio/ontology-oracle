@@ -1,8 +1,10 @@
 from boa.interop.System.App import RegisterAppCall
 from boa.interop.System.ExecutionEngine import GetExecutingScriptHash
 from boa.interop.System.Runtime import Notify, Serialize, Deserialize
+from boa.builtins import *
+from ontology.interop.Ontology.Runtime import Base58ToAddress
 
-oracleContract = RegisterAppCall('06514a6f9a27d20ca59f9f14fdf699a22ebc1c58', 'operation', 'args')
+oracleContract = RegisterAppCall('ff4d2c2765346c9229201687604af4f59a0a334f', 'operation', 'args')
 
 def main(operation, args):
     if operation == 'genRandom':
@@ -72,8 +74,7 @@ def genRandom():
 		]
 	}"""
 
-    oracleContract('CreateOracleRequest',[req,ToScriptHash('AKQj23VWXpdRou1FCUX3g8XBcSxfBLiezp')])
-
+    res = oracleContract('CreateOracleRequest',[req,Base58ToAddress('AKQj23VWXpdRou1FCUX3g8XBcSxfBLiezp')])
 
     return True
 

@@ -4,10 +4,11 @@ from boa.interop.System.Runtime import CheckWitness, GetTime, Notify, Serialize,
 from boa.interop.System.ExecutionEngine import GetExecutingScriptHash, GetScriptContainer
 from boa.interop.Ontology.Native import Invoke
 from boa.interop.System.Transaction import GetTransactionHash
-from boa.builtins import ToScriptHash, state
+from boa.builtins import *
+from ontology.interop.Ontology.Runtime import Base58ToAddress
 
 ######################### Global info ########################
-Admin = ToScriptHash('AMAx993nE6NEqZjwBssUfopxnnvTdob9ij')
+Admin = Base58ToAddress('AMAx993nE6NEqZjwBssUfopxnnvTdob9ij')
 ONGAddress = bytearray(b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02')
 fee = 10000000
 UndoRequestKey = "UndoRequest"
