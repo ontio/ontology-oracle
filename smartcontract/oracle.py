@@ -54,7 +54,7 @@ def Main(operation, args):
             return False
         request = args[0]
         address = args[1]
-        CreateOracleRequest(request, address);
+        return CreateOracleRequest(request, address)
     if operation == "SetOracleOutcome":
         if len(args) != 4:
             return False
@@ -137,6 +137,7 @@ def SetFee(fee):
     RequireWitness(Admin)
     Require(fee >= 0)
     Put(GetContext(), Fee, fee)
+    return True
 
 def MigrateContract(code, needStorage, name, version, author, email, description):
     RequireWitness(Admin)
