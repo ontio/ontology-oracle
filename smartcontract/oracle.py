@@ -11,6 +11,7 @@ from ontology.interop.Ontology.Runtime import Base58ToAddress
 Admin = Base58ToAddress('AMAx993nE6NEqZjwBssUfopxnnvTdob9ij')
 ONGAddress = bytearray(b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02')
 Fee = "Fee"
+SyncAddress = "SyncAddress"
 UndoRequestKey = "UndoRequest"
 
 """
@@ -23,7 +24,6 @@ def Revert():
     work, so, revert by calling unused opcode.
     """
     raise Exception(0xF1F1F2F2F3F3F4F4)
-
 
 """
 https://github.com/ONT-Avocados/python-template/blob/master/libs/SafeCheck.py
@@ -73,6 +73,11 @@ def Main(operation, args):
             return False
         fee = args[0]
         return SetFee(fee)
+    if operation == "SetSyncAddress":
+        if len(args) != 1:
+            return False
+        syncAddress = args[0]
+        return SetSyncAddress(syncAddress)
     if operation == "MigrateContract":
         if len(args) !=7:
             return False
@@ -90,11 +95,9 @@ def CreateOracleRequest(request, address):
     RequireWitness(address)
 
     fee = Get(GetContext(), Fee)
-    #transfer ong to oracle admin address
+    #transfer ong to oracle Admin address
     res = TransferONG(address, Admin, fee)
-    if res == False:
-        Notify(["transferONG Error"])
-        return False
+    Require(res)
 
     #get transaction hash
     txHash = GetTransactionHash(GetScriptContainer())
@@ -104,12 +107,14 @@ def CreateOracleRequest(request, address):
     undoRequestMap[txHash] = request
     b = Serialize(undoRequestMap)
     Put(GetContext(), UndoRequestKey, b)
-    Notify(["CreateOracleRequest Done", txHash, request])
+    Notify(["createOracleRequest", request, address])
     return True
 
 def SetOracleOutcome(txHash, data, status, errMessage):
     #check witness
-    RequireWitness(Admin)
+    syncAddress = Get(GetContext(), SyncAddress)
+    Require(len(syncAddress) == 20)
+    RequireWitness(syncAddress)
 
     #get undoRequest map
     undoRequestMap = GetUndoRequestMap()
@@ -125,12 +130,11 @@ def SetOracleOutcome(txHash, data, status, errMessage):
     undoRequestMap.remove(txHash)
     b = Serialize(undoRequestMap)
     Put(GetContext(), UndoRequestKey, b)
-    Notify(["SetOracleOutcome Done", txHash, status, errMessage])
+    Notify(["setOracleOutcome", txHash, status, errMessage])
     return True
 
 def GetOracleOutcome(txHash):
     v = Get(GetContext(), txHash)
-    Notify(["Get oracle outcome", v])
     return v
 
 def SetFee(fee):
@@ -139,11 +143,16 @@ def SetFee(fee):
     Put(GetContext(), Fee, fee)
     return True
 
+def SetSyncAddress(syncAddress):
+    RequireWitness(Admin)
+    Require(len(syncAddress) == 20)
+    Put(GetContext(), SyncAddress, syncAddress)
+    return True
+
 def MigrateContract(code, needStorage, name, version, author, email, description):
     RequireWitness(Admin)
     res = Migrate(code, needStorage, name, version, author, email, description)
     Require(res)
-    Notify(["Migrate Contract successfully", Admin, GetTime()])
     return True
 
 def GetUndoRequestMap():
