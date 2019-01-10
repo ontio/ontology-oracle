@@ -1,41 +1,38 @@
-English | [中文](README_CN.md)
+[English](README.md) | 中文
 
 # Ontology Oracle
 ## ontology oracle
-Blockchain Oracle is designed to solve the problem that smartcontract can't interact with outside world. Now more and more dapps depend on outside world trigger: for example:
+区块链预言机（Blockchain Oracles）"概念的提出主要是为了解决区块链协议自身存在的局限性：区块链这种去中心化的网络（包括在其上构建的应用/ 智能合约）不能与外部内容进行交互。但很多时候智能合约又必须依赖外部触发条件，比如合约：
 
-One flight will arrive at 10:00 am, if the flight delays, insurance smartcontract will be triggered, all applicants should get 100 token for compensation.
+某次航班将于10:00am到达目的地，如果航班延误将触发智能合约，投保人将获得100代币的补偿。
 
-Now dapps need more and more outside world data, like flight information, stoke price, weather information, match result...
+随着区块链应用变得越来越复杂，迫切需要解决“围墙花园”的限制。如航班信息，股票价格，贵金属价格，等等大量的数据需要上链服务。对于这样的数据，智能合约是无法从外部网站获取的。所以就需要预言机来搬运，将外部数据写入到区块链中，使合约得以完成。
 
-Ontology oracle is exactly the role of data transporter, makes it possible for smartcontract to get outside world data.
+Ontology oracle正是这样的一个数据搬运工的角色，它使得在智能合约中获取链外数据成为可能，未来还将会针去中心化oracle的数据正确性问题进行一定的博弈。
 
-## ontology oracle framework
+## ontology oracle基础架构
 
 ![framework](/resources/framework.png)
 
-### off-chain（oracle operator & data source）
-Outside the blockchain, ontology oracle consist of oracle operator and data source.
+### 链下部分（oracle node & data source）
+在链外，ontology oracle由oracle node组成，node和ontology网络相连，并独立的处理数据请求，未来可以支持更多的区块链网络。
 
-Operator listen the oracle request of oracle contract in ontology network, process the request and fetch data from data source, serialize result and put it in oracle request.
+节点的工作由两个子任务组成，数据爬取和数据解析，数据爬取从api中获取response，数据解析解析该response，并按照用户定义的数据结构序列化，写入oracle合约。
 
-Oracle request consist of 2 tasks, data fetch and data parse. Data fetch get response of target api, data parse parse the response and serialize the result according to the data structure defined by users.
+### 链上部分（oracle contract)
+oracle contract主要对node发送的数据进行聚集和存储，供其他合约调用。
 
-### on-chain（oracle contract)
-On block chain, oracle contract receive oracle request from users and result from oracle operator. Any application contract and call oracle contract to request outside world data and get result.
-
-### Oracle work flow
+### Oracle运作流程
 ![workflow](/resources/workflow.png)
 
-## create oracle request
-In order to get outside world data in smartcontract, users can call deployed oracle contract in ontology network(in the future, all deployed oracle contract will be listed in "oracle market") to send oracle request and get result.
+## 创建oracle request
+用户可以在自己的合约中调用部署在ontology网络上的oracle contract来获取外部数据，目前支持httpGet， httpPost， random.Org获取随机数：
 
-For now, the address of example oracle contract deployed is follows:
+目前，该ontology oracle案例已经部署，合约地址为：
 
-Testnet: e0d635c7eb2c5eaa7d2207756a4c03a89790934a
+测试网：e0d635c7eb2c5eaa7d2207756a4c03a89790934a
 
-MainNet: a6ee997b142b002d49670ab73803403b09a23fa0
-
+主网：a6ee997b142b002d49670ab73803403b09a23fa0
 ### httpGet
 ```text
 operation = "CreateOracleRequest"
@@ -77,7 +74,7 @@ request = """{
 	}"""
 args = [request, address]
 ```
-raw http response:
+http response:
 ```text
 {
 	"high": "5610.00000000",
@@ -93,24 +90,24 @@ raw http response:
 ```
 params:
 
-url: url of http get request
+url: http get请求的地址url
 
 ### JsonParse
-jsonParse will parse the http response, key is the "path" list in params. Then serialize result as "data" structure defined by users. And write result in oracle contract.
+该类型的task会以path参数为key逐层遍历，返回得到的value结果。
 
 params:
 
-data: data structure defined by users, used to serialize and deserialize result.
+data: 所要获取的数据结构，以结构体的形式返回。
 
-type: data type, support int, float(* decimal as int), string, array, map, struct.
+type: 数据类型，支持int，float（乘以精度按照int处理），string ，array，map，struct。
 
-sub_type: sub_type of array, map and struct.
+sub_type: array, map的子类型。
 
-decimal: decimal of float。
+decimal: 浮点数所要乘以的精度。
 
-path: iterator list of json parse key, if data is json, write key in list, if data is array, write index as string in list.
+path: 一个数组，每个元素作为下次获取数据的索引, 如果数据为json, 则是该json数据的key, 如果数据为array, 则是该数据的index。
 
-Following is a complex JsonParse example
+下面给出一个更复杂的JsonParse案例：
 
 ```text
 var request = """{
@@ -171,7 +168,7 @@ var request = """{
 	}"""
 ```
 
-parts of raw http response is:
+部分原始http response返回格式为：
 ```text
 {
 	"numGames": 3,
@@ -211,9 +208,9 @@ parts of raw http response is:
 	]
 }
 ```
-This example parse raw http response, then create a struct according to "data" structure. Then serialize the struct.
+该案例解析原始http response，并根据“data”的结构创建结构体，并序列化。
 
-Application contract call oracle contract to get result, then deserialize the result as follows:
+应用合约通过跨合约调用oracle合约获取数据结果，反序列化后的返回如下：
 ```text
 [
     [
@@ -223,18 +220,18 @@ Application contract call oracle contract to get result, then deserialize the re
     ]
 ]
 ```
-### scheduler
+### scheduler定义
 ```text
 {
     "type": "",
     "params": "",
 }
 ```
-type only support RunAfter, means task run after a given time, empty means run right now.
+type目前支持RunAfter，在某时刻后执行。 此项不填为立即执行。
 #### RunAfter
-This type of task will run after given time, for example, users can get the result of a game after the game ended.
+该类型的job会在指定的时间之后执行，如赛事结果oracle可以将其设置为赛事结束之后。
 
-params: string indicates time, format in "2018-06-15 08:37:18"
+params: 代表时间的字符串，格式如"2018-06-15 08:37:18"
 
 ### httpPost
 ```text
@@ -276,7 +273,7 @@ request = """{
     }"""
 args = [request, address]
 ```
-raw http response:
+http response:
 ```text
 {
     "jsonrpc": "2.0",
@@ -309,8 +306,9 @@ raw http response:
     "id": 1
 }
 ```
+该案例返回一个结构体，结构体中有一个数组，数组中有6个元素。
 
-Application contract deserialize result as follows:
+应用合约解析后的返回如下：
 ```text
 [
     [
@@ -324,9 +322,8 @@ Application contract deserialize result as follows:
 ]
 ```
 ### randomOrg
-The http post example above get random number from random.org, this ontology oracle package a more convenient method "randomOrg" to get random number.
-
-#### signed random number
+上述httpPost的例子其实是在random.org获取签名随机数，目前的oracle模板专门为random.org的随机数封装了一个更简便的调用方法randomOrg。
+#### 签名随机数
 ```text
 operation = "CreateOracleRequest"
 request = """{
@@ -374,13 +371,13 @@ args = [request, address]
 ```
 params:
 
-n: amount of random numbers
+n: 随机数的个数
 
-min: min of random numbers
+min: 随机数的最小值
 
-max: max of random numbers
+max: 随机数的最大值
 
-replacement: true(random number can occur several times), false(random number is unique)
+replacement: 是否允许重复(true:是 / false:否)
 
 response:
 ```go
@@ -392,7 +389,7 @@ type SignedIntegerData struct {
 	Signature    string          `json:"signature"`
 }
 ```
-#### unsigned random number
+#### 非签名随机数
 ```text
 operation = "{
         "scheduler":{
@@ -439,13 +436,13 @@ args = [request, address]
 ```
 params:
 
-n: amount of random numbers
+n: 随机数的个数
 
-min: min of random numbers
+min: 随机数的最小值
 
-max: max of random numbers
+max: 随机数的最大值
 
-replacement: true(random number can occur several times), false(random number is unique)
+replacement: 是否允许重复(true:是 / false:否)
 
 response:
 ```go
@@ -455,14 +452,14 @@ type IntegerData struct {
 }
 ```
 
-### get result of oracle request
+### 获取oracle request的结果
 ```text
 operation = "GetOracleOutcome"
 args = txhash
 ```
-txhash is the transaction hash of oracle request on-chain
+txhash为oracle request在链上的交易hash。
 
-# code example
-Oracle contract template see smartcontract/oracle.py
+# 代码示例
+Oracle contract模板见smartcontract/oracle.py
 
-Template of application contract use oracle see smartcontract/app.py
+使用Oracle的应用合约模板见smartcontract/app.py
