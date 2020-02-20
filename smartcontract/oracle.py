@@ -1,10 +1,10 @@
-from boa.interop.Ontology.Contract import Migrate
-from boa.interop.System.Storage import GetContext, Get, Put, Delete
-from boa.interop.System.Runtime import CheckWitness, GetTime, Notify, Serialize, Deserialize
-from boa.interop.System.ExecutionEngine import GetExecutingScriptHash, GetScriptContainer
-from boa.interop.Ontology.Native import Invoke
-from boa.interop.System.Transaction import GetTransactionHash
-from boa.builtins import *
+from ontology.interop.Ontology.Contract import Migrate
+from ontology.interop.System.Storage import GetContext, Get, Put, Delete
+from ontology.interop.System.Runtime import CheckWitness, GetTime, Notify, Serialize, Deserialize
+from ontology.interop.System.ExecutionEngine import GetExecutingScriptHash, GetScriptContainer
+from ontology.interop.Ontology.Native import Invoke
+from ontology.interop.System.Transaction import GetTransactionHash
+from ontology.builtins import *
 from ontology.interop.Ontology.Runtime import Base58ToAddress
 
 ######################### Global info ########################

@@ -1,7 +1,7 @@
-from boa.interop.System.App import RegisterAppCall
-from boa.interop.System.ExecutionEngine import GetExecutingScriptHash
-from boa.interop.System.Runtime import Notify, Serialize, Deserialize
-from boa.builtins import *
+from ontology.interop.System.App import RegisterAppCall
+from ontology.interop.System.ExecutionEngine import GetExecutingScriptHash
+from ontology.interop.System.Runtime import Notify, Serialize, Deserialize
+from ontology.builtins import *
 from ontology.interop.Ontology.Runtime import Base58ToAddress
 
 oracleContract = RegisterAppCall('e0d635c7eb2c5eaa7d2207756a4c03a89790934a', 'operation', 'args')
@@ -84,6 +84,16 @@ def getRandom(txHash):
         return ''
     a = Deserialize(res)
     b = Deserialize(a[0])
+    """
+    the structure of b is:
+    [
+        [
+            ["0021800316", "1610612744", "128", "1610612761", "131"],
+            ["0021800317", "2610612744", "96", "2610612761", "131"],
+            ["0021800318", "3610612744", "128", "3610612761", "131"]
+        ]
+    ]
+    """
     Notify(b)
     Notify(b[0])
     Notify(b[0][0])
