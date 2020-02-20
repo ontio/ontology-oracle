@@ -26,4 +26,6 @@ oracle contract主要对node发送的数据进行聚集和存储，供其他合�
 ![workflow](/resources/workflow.png)
 
 ## 文档
-更多文档见: [Docs](docs)
+[如何在应用中使用Oracle服务](docs/specifications/how_to_use_oracle_cn.md)
+
+[如何提供一个Oracle服务](docs/specifications/serve_as_oracle_cn.md)
