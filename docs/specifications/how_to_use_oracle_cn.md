@@ -1,3 +1,5 @@
+[English](how_to_use_oracle_EN.md) | 中文
+
 # 如何在app中使用Oracle服务
 
 用户需要在自己的app智能合约中添加对Oracle合约的调用来使用Oracle服务，如在需要外部数据时，构造数据请求，发送给Oracle合约，并通过Oracle合约获取数据请求的结果。步骤如下：

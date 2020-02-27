@@ -28,6 +28,6 @@ On block chain, oracle contract receive oracle request from users and result fro
 ![workflow](/resources/workflow.png)
 
 ## Document
-[How to use oracle in your appplication](docs/specifications/how_to_use_oracle_cn.md)
+[How to use oracle in your appplication](docs/specifications/how_to_use_oracle_EN.md)
 
-[How to provide an oracle service](docs/specifications/serve_as_oracle_cn.md)
+[How to provide an oracle service](docs/specifications/serve_as_oracle_EN.md)

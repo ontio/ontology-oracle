@@ -1,3 +1,5 @@
+English | [中文](how_to_use_oracle_cn.md)
+
 # How to Use Oracle Services in Applications
 
 Oracle services can be used in applications by invoking the Oracle contract in the scope of app's smart contract. When there is a requirement for external data a request can be created and sent to the Oracle contract to fetch the results. The process involved is described below: 

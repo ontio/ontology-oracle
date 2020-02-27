@@ -1,3 +1,5 @@
+English | [中文](serve_as_oracle_cn.md)
+
 # Oracle Service Vendors
 
 The opportunity of becoming an Oracle service vendor is open for any intrested party. Oracles can provide services to fetch public data, or can be limited to a certain Specialized domain that one has understanding of. A fixed amount of processing fee can be charged for each request to the Oracle. Details regarding becoming an Oracle service vendor have been provided below.
