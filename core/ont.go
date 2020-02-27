@@ -19,16 +19,15 @@
 package core
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/ontio/ontology/vm/neovm/types"
 
 	"github.com/ontio/ontology-oracle/config"
 	"github.com/ontio/ontology-oracle/log"
 	"github.com/ontio/ontology-oracle/models"
 	"github.com/ontio/ontology-oracle/utils"
 	"github.com/ontio/ontology/common"
-	"github.com/ontio/ontology/smartcontract/service/neovm"
 )
 
 type UndoRequests struct {
@@ -55,23 +54,24 @@ func (app *OracleApplication) AddUndoRequests() error {
 		return nil
 	}
 
-	bf := bytes.NewBuffer(value)
-	items, err := neovm.DeserializeStackItem(bf)
+	bf := common.NewZeroCopySource(value)
+	items := types.VmValue{}
+	err = items.Deserialize(bf)
 	if err != nil {
-		return fmt.Errorf("neovm.DeserializeStackItem error:%s", err)
+		return fmt.Errorf("items.Deserialize error:%s", err)
 	}
-	requestMap, err := items.GetMap()
+	requestMap, err := items.AsMapValue()
 	if err != nil {
 		return fmt.Errorf("items.GetMap error:%s", err)
 	}
-	for k, v := range requestMap {
-		txHashBytes, err := k.GetByteArray()
+	for _, v := range requestMap.Data {
+		txHashBytes, err := v[0].AsBytes()
 		if err != nil {
-			log.Errorf("k.GetByteArray error:%s", err)
+			log.Errorf("v[0].AsBytes error:%s", err)
 		}
-		requestBytes, err := v.GetByteArray()
+		requestBytes, err := v[1].AsBytes()
 		if err != nil {
-			log.Errorf("v.GetByteArray error:%s", err)
+			log.Errorf("v[1].AsBytes error:%s", err)
 		}
 		request := string(requestBytes)
 
@@ -127,8 +127,8 @@ func (app *OracleApplication) sendDataToContract(jr models.JobRun) error {
 	if err != nil {
 		return fmt.Errorf("utils.GetContractAddress error:%s", err)
 	}
-	_, err = app.Ont.NeoVM.InvokeNeoVMContract(config.Configuration.GasPrice, config.Configuration.GasLimit, app.Account,
-		contractAddress, args)
+	_, err = app.Ont.NeoVM.InvokeNeoVMContract(config.Configuration.GasPrice, config.Configuration.GasLimit,
+		app.Account, app.Account, contractAddress, args)
 	if err != nil {
 		return fmt.Errorf("InvokeNeoVMContract error:%s", err)
 	}

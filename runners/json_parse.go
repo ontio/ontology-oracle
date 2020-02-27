@@ -21,13 +21,13 @@ package runners
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/ontio/ontology/common"
 	"math/big"
 	"strconv"
 	"strings"
 
 	"github.com/bitly/go-simplejson"
 	"github.com/ontio/ontology-oracle/models"
-	"github.com/ontio/ontology/smartcontract/service/neovm"
 	"github.com/ontio/ontology/vm/neovm/types"
 )
 
@@ -52,16 +52,17 @@ func (jsonParse *JSONParse) Perform(input models.RunResult) models.RunResult {
 	if err != nil {
 		return input.WithError(err)
 	}
-	stakeItem := types.NewStruct(results)
-	b, err := neovm.SerializeStackItem(stakeItem)
+	vmValue := types.VmValueFromStructVal(&types.StructValue{Data: results})
+	sink := common.NewZeroCopySink(nil)
+	err = vmValue.Serialize(sink)
 	if err != nil {
 		return input.WithError(err)
 	}
-	return input.WithValue(b)
+	return input.WithValue(sink.Bytes())
 }
 
-func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) ([]types.StackItems, error) {
-	temp1 := []types.StackItems{}
+func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) ([]types.VmValue, error) {
+	temp1 := []types.VmValue{}
 	for _, data := range dataList {
 		js, err := getByPath(jsa, data.Path)
 		if err != nil {
@@ -69,7 +70,7 @@ func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) ([]types.Stac
 		}
 		switch strings.ToLower(data.Type) {
 		case "array":
-			temp2 := types.NewArray(nil)
+			temp2 := types.NewArrayValue()
 			tempArray, err := js.Array()
 			if err != nil {
 				return nil, err
@@ -88,12 +89,15 @@ func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) ([]types.Stac
 					return nil, err
 				}
 				for _, result := range results {
-					temp2.Add(result)
+					err := temp2.Append(result)
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
-			temp1 = append(temp1, temp2)
+			temp1 = append(temp1, types.VmValueFromArrayVal(temp2))
 		case "map":
-			temp3 := types.NewMap()
+			temp3 := types.NewMapValue()
 			tempMap, err := js.Map()
 			if err != nil {
 				return nil, err
@@ -112,20 +116,30 @@ func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) ([]types.Stac
 					return nil, err
 				}
 				for _, result := range results {
-					temp3.Add(types.NewByteArray([]byte(k)), result)
+					key, err := types.VmValueFromBytes([]byte(k))
+					if err != nil {
+						return nil, err
+					}
+					err = temp3.Set(key, result)
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
-			temp1 = append(temp1, temp3)
+			temp1 = append(temp1, types.VmValueFromMapValue(temp3))
 		case "struct":
-			temp4 := types.NewStruct(nil)
+			temp4 := types.NewStructValue()
 			results, err := parseStruct(js, data.SubType)
 			if err != nil {
 				return nil, err
 			}
 			for _, result := range results {
-				temp4.Add(result)
+				err := temp4.Append(result)
+				if err != nil {
+					return nil, err
+				}
 			}
-			temp1 = append(temp1, temp4)
+			temp1 = append(temp1, types.VmValueFromStructVal(temp4))
 		default:
 			switch strings.ToLower(data.Type) {
 			case "string":
@@ -133,14 +147,20 @@ func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) ([]types.Stac
 				if err != nil {
 					return nil, err
 				}
-				ba := types.NewByteArray([]byte(r))
+				ba, err := types.VmValueFromBytes([]byte(r))
+				if err != nil {
+					return nil, err
+				}
 				temp1 = append(temp1, ba)
 			case "int":
 				r, err := getIntValue(js)
 				if err != nil {
 					return nil, err
 				}
-				int := types.NewInteger(new(big.Int).SetInt64(r))
+				int, err := types.VmValueFromBigInt(new(big.Int).SetInt64(r))
+				if err != nil {
+					return nil, err
+				}
 				temp1 = append(temp1, int)
 			case "float":
 				r, err := getFloatValue(js)
@@ -150,7 +170,10 @@ func parseStruct(jsa *simplejson.Json, dataList []*OracleParamAbi) ([]types.Stac
 				if data.Decimal == 0 {
 					data.Decimal = 1
 				}
-				float := types.NewInteger(new(big.Int).SetInt64(int64(r * float64(data.Decimal))))
+				float, err := types.VmValueFromBigInt(new(big.Int).SetInt64(int64(r * float64(data.Decimal))))
+				if err != nil {
+					return nil, err
+				}
 				temp1 = append(temp1, float)
 			default:
 				return nil, fmt.Errorf("data.Type is not supported")
