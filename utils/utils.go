@@ -29,7 +29,7 @@ import (
 
 // NewBytes32ID returns a randomly generated UUID
 func NewBytes32ID() string {
-	return strings.Replace(uuid.Must(uuid.NewV4()).String(), "-", "", -1)
+	return strings.Replace(uuid.NewV4().String(), "-", "", -1)
 }
 
 func GetContractAddress() (common.Address, error) {
